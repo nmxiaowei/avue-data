@@ -6,10 +6,6 @@ Avue Data 是一个基于 Vue 3、Vite、Element Plus 和 Avue 的大屏可视�
 
 - [datav.avuejs.com](https://datav.avuejs.com)
 
-## 客服微信
-
-![客服微信](https://avuejs.com/images/wechat.jpg)
-
 ## 项目截图
 
 <table>
@@ -127,3 +123,7 @@ docker/       Docker 相关配置
 ## 协议
 
 本项目基于 AGPL-3.0 协议开源，详情请查看 [LICENSE](./LICENSE)。
+
+## 客服微信
+
+<img src="https://avuejs.com/images/wechat.jpg" alt="客服微信" width="180" />

@@ -1,0 +1,231 @@
+@mixin panel-root {
+  color: var(--text-color-primary);
+}
+
+@mixin compact-form {
+  :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+
+  :deep(.el-form-item__content) {
+    min-width: 0;
+  }
+}
+
+@mixin section-title($size: 13px) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: $size;
+}
+
+@mixin toolbar($margin: 10px 5px) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin: $margin;
+}
+
+@mixin card($padding: 10px, $radius: 8px) {
+  border: 1px solid var(--border-color-lighter);
+  border-radius: $radius;
+  background: var(--bg-color-secondary);
+  padding: $padding;
+}
+
+@mixin card-list($gap: 10px) {
+  display: flex;
+  flex-direction: column;
+  gap: $gap;
+}
+
+@mixin card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+@mixin title-row {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+@mixin index-badge {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 6px;
+  background: var(--primary-lighter-color);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+@mixin action-row {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+@mixin inline-control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@mixin first-flex-child {
+  > *:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
+
+@mixin param-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+@mixin status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 6px;
+
+  &.is-success {
+    background: var(--success-color);
+  }
+
+  &.is-error {
+    background: var(--error-color);
+  }
+}
+
+@mixin empty-tip {
+  border: 1px dashed var(--border-color-lighter);
+  border-radius: 8px;
+  background: var(--bg-color-secondary);
+}
+
+@mixin drawer-shell($name, $body-bottom: 76px) {
+  :deep(.#{$name}.el-drawer) {
+    max-width: 100vw;
+  }
+
+  :deep(.#{$name} .el-drawer__header) {
+    margin-bottom: 0;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-color-lighter);
+  }
+
+  :deep(.#{$name} .el-drawer__body) {
+    padding: 14px 18px $body-bottom;
+    overflow-y: auto;
+  }
+}
+
+@mixin drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-color-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+@mixin fixed-footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-color-lighter);
+  background: var(--bg-color-primary);
+}
+
+@mixin collapse-card($content-padding: 12px, $header-min-height: 48px, $item-margin: 10px) {
+  border-top: 0;
+  border-bottom: 0;
+
+  :deep(.el-collapse-item) {
+    overflow: hidden;
+    margin-bottom: $item-margin;
+    border: 1px solid var(--border-color-lighter);
+    border-radius: 8px;
+    background: var(--bg-color-secondary);
+  }
+
+  :deep(.el-collapse-item__header) {
+    height: auto;
+    min-height: $header-min-height;
+    padding: 0 10px;
+    border-bottom-color: var(--border-color-lighter);
+    background: transparent;
+  }
+
+  :deep(.el-collapse-item__arrow) {
+    display: none;
+  }
+
+  :deep(.el-collapse-item__wrap) {
+    border-bottom: 0;
+    background: transparent;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding: $content-padding;
+  }
+}
+
+@mixin toggle-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 6px;
+  background: var(--bg-color-primary);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+
+  .el-icon {
+    font-size: 13px;
+    transition: transform 0.2s ease;
+  }
+
+  &.is-active {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background: var(--primary-lighter-color);
+
+    .el-icon {
+      transform: rotate(90deg);
+    }
+  }
+}

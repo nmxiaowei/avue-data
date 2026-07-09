@@ -1,0 +1,255 @@
+/**
+ * Monaco编辑器样式文件
+ * 使用主题变量系统，支持亮色/暗色主题切换
+ */
+
+/* Monaco编辑器容器样式 */
+.monaco_editor_container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border-color-dark);
+  overflow: hidden;
+  background-color: var(--bg-color-primary);
+}
+
+/* 工具栏样式 */
+.monaco-toolbar {
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background-color: var(--bg-color-secondary);
+  border-bottom: 1px solid var(--border-color-base);
+  z-index: 10;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-color);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-color);
+    border-radius: 2px;
+  }
+}
+
+/* 工具栏按钮样式 */
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  background-color: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  outline: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  i {
+    margin-right: 4px;
+  }
+
+  &:hover {
+    background-color: var(--bg-color-hover);
+    color: var(--text-color-primary);
+  }
+
+  &:active {
+    background-color: var(--bg-color-active);
+  }
+
+  &:disabled {
+    background-color: var(--bg-color-disabled);
+    color: var(--text-color-disabled);
+    cursor: not-allowed;
+  }
+}
+
+/* 编辑器全屏样式 */
+.editor-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 9999 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: var(--bg-color-primary);
+}
+
+/* Monaco编辑器内部样式增强 */
+
+/* 错误提示相关样式 */
+.monaco-error {
+  /* 错误数量指示器 */
+  &-badge {
+    display: inline-block;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    margin-left: 5px;
+    background-color: var(--error-color);
+    color: var(--color-white);
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--error-light-color);
+    }
+  }
+
+  /* 错误提示框样式 */
+  &-tooltip {
+    position: absolute;
+    z-index: 10000;
+    width: 400px;
+    max-height: 300px;
+    background-color: var(--bg-color-secondary);
+    border: 1px solid var(--border-color-base);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    color: var(--text-color-regular);
+    font-size: 12px;
+    overflow: hidden;
+    display: none;
+    margin: 0;
+    padding: 0;
+
+    &-title {
+      padding: 8px 12px;
+      font-weight: bold;
+      background-color: var(--bg-color-tertiary);
+      border-bottom: 1px solid var(--border-color-base);
+      color: var(--text-color-primary);
+    }
+
+    &-content {
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 0;
+
+      /* 自定义滚动条 */
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: var(--scrollbar-track-color);
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb-color);
+        border-radius: 3px;
+      }
+    }
+
+    &-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color-base);
+      transition: background-color 0.2s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: var(--bg-color-hover);
+      }
+    }
+  }
+
+  /* 错误类型图标 */
+  &-type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex-shrink: 0;
+
+    &.is-error i {
+      color: var(--error-color);
+    }
+
+    &.is-warning i {
+      color: var(--warning-color);
+    }
+
+    &.is-info i {
+      color: var(--info-color);
+    }
+  }
+
+  /* 错误消息文本 */
+  &-message {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
+    color: var(--text-color-primary);
+  }
+
+  /* 错误位置信息 */
+  &-location {
+    color: var(--text-color-placeholder);
+    white-space: nowrap;
+    font-size: 11px;
+  }
+}
+
+/* 主题适配 - 亮色主题特殊处理 */
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .monaco-error-tooltip {
+    width: 300px;
+    max-height: 250px;
+  }
+
+  .toolbar-btn {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.monaco-error-tooltip {
+  animation: fadeIn 0.2s ease-out;
+}

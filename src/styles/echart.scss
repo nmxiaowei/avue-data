@@ -1,0 +1,472 @@
+@keyframes rotating {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.avue-echart {
+  &-fill {
+    .avue-form {
+      padding: 20px 0;
+    }
+    .el-collapse-item__wrap {
+      background-color: transparent;
+    }
+  }
+  &-video {
+    position: relative;
+
+    &__img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1024;
+    }
+  }
+
+  &-tabs {
+    .el-select {
+      width: 100%;
+    }
+
+    .el-select,
+    .el-input,
+    input {
+      height: 100%;
+    }
+
+    .el-input {
+      font-size: inherit;
+    }
+
+    &__list {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100%;
+    }
+
+    &__icon {
+      margin-right: 10px;
+    }
+
+    &__item {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+  }
+
+  &-iframe {
+    iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &-text {
+    overflow: hidden;
+
+    &__box {
+      width: 100%;
+      height: 100%;
+    }
+
+    &__text {
+      display: block;
+      text-decoration: none;
+
+      &--ellipsis {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+      }
+
+      &--blink {
+        animation: avue-text-blink 1s ease-in-out infinite;
+      }
+
+      &--typewriter::after {
+        content: "|";
+        animation: avue-text-cursor 0.7s step-end infinite;
+      }
+    }
+  }
+
+  &-swiper {
+    .el-carousel,
+    .el-carousel__container {
+      height: 100%;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      user-select: none;
+    }
+  }
+
+  &-pie {
+    &__title {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  &-table {
+    .el-table__body-wrapper tr td.el-table-fixed-column--left,
+    .el-table__body-wrapper tr td.el-table-fixed-column--right,
+    .el-table__body-wrapper tr th.el-table-fixed-column--left,
+    .el-table__body-wrapper tr th.el-table-fixed-column--right,
+    .el-table__footer-wrapper tr td.el-table-fixed-column--left,
+    .el-table__footer-wrapper tr td.el-table-fixed-column--right,
+    .el-table__footer-wrapper tr th.el-table-fixed-column--left,
+    .el-table__footer-wrapper tr th.el-table-fixed-column--right,
+    .el-table__header-wrapper tr td.el-table-fixed-column--left,
+    .el-table__header-wrapper tr td.el-table-fixed-column--right,
+    .el-table__header-wrapper tr th.el-table-fixed-column--left,
+    .el-table__header-wrapper tr th.el-table-fixed-column--right {
+      background: transparent !important;
+    }
+    height: 100%;
+    .el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+      background-color: transparent !important;
+    }
+    .el-table {
+      background-color: transparent !important;
+    }
+
+    .el-table__inner-wrapper {
+      &::before {
+        display: none;
+      }
+    }
+
+    .el-table::before {
+      display: none;
+    }
+
+    .el-table colgroup.gutter,
+    .el-table th.gutter {
+      display: none !important;
+    }
+
+    .el-table td,
+    .el-table th.is-leaf {
+      border-bottom: none;
+    }
+
+    .el-table tbody tr:hover > td {
+      background-color: transparent !important;
+    }
+
+    .el-table__body-wrapper::-webkit-scrollbar {
+      width: 0px;
+    }
+  }
+
+  &-header {
+    padding: 10px;
+
+    &--center {
+      text-align: center;
+    }
+
+    &--right {
+      text-align: right;
+    }
+
+    &__title {
+      margin-right: 5px;
+      font-size: 18px;
+      font-weight: 400;
+      color: #333;
+      text-decoration: none;
+    }
+
+    &__info {
+      display: inline-block;
+    }
+  }
+
+  &-progress {
+    position: relative;
+  }
+
+  &-img {
+    &--rotate {
+      animation: rotating 0s linear infinite;
+    }
+
+    img {
+      transition-property: opacity, transform;
+    }
+  }
+
+  &-scada {
+    &--rotate {
+      animation: rotating 0s linear infinite;
+    }
+  }
+
+  &-flop {
+    &__list {
+      justify-content: flex-start;
+      display: flex;
+      flex-wrap: wrap;
+      width: 100%;
+      height: 100%;
+    }
+
+    &__number {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  &-map {
+    position: relative;
+
+    &__bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    &__box {
+      position: relative;
+    }
+
+    &__location {
+      position: absolute;
+      background-color: red;
+      width: 10px;
+      height: 10px;
+      &:hover {
+        background-color: green;
+      }
+    }
+  }
+
+  &-time,
+  &-notice,
+  &-audio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 48px;
+      color: #fff;
+    }
+  }
+
+  &-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 48px;
+      color: #fff;
+    }
+  }
+
+  &-group {
+    position: relative;
+  }
+}
+
+// 规则引擎公共动画
+.avue-rule-blink {
+  animation: avue-rule-blink 0.8s ease-in-out infinite;
+}
+
+.avue-rule-rotate {
+  animation: avue-rule-rotate 2s linear infinite;
+}
+
+.avue-rule-shake {
+  animation: avue-rule-shake 0.5s ease-in-out infinite;
+}
+
+// 规则引擎公共文字样式，覆盖 DOM 型组件内部已有的文字样式
+.avue-rule-text-color,
+.avue-rule-text-color * {
+  color: var(--avue-rule-text-color) !important;
+}
+
+.avue-rule-font-size,
+.avue-rule-font-size * {
+  font-size: var(--avue-rule-font-size) !important;
+}
+
+.avue-rule-font-weight,
+.avue-rule-font-weight * {
+  font-weight: var(--avue-rule-font-weight) !important;
+}
+
+@keyframes avue-rule-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes avue-rule-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes avue-rule-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes avue-text-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes avue-text-cursor {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.positive-water-run-dotted {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: positive-run-dotted 10s linear infinite;
+}
+
+.positive-water-run-dashed {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: positive-run-dashed 10s linear infinite;
+}
+
+.positive-water-run-blend {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: positive-run-blend 10s linear infinite;
+}
+
+.reverse-water-run-dotted {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: reverse-run-dotted 10s linear infinite;
+}
+
+.reverse-water-run-dashed {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: reverse-run-dashed 10s linear infinite;
+}
+
+.reverse-water-run-blend {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: reverse-run-blend 10s linear infinite;
+}
+
+@keyframes positive-run-dotted {
+  0% {
+    stroke-dasharray: 5, 5;
+  }
+
+  to {
+    stroke-dasharray: 10, 5;
+  }
+}
+
+@keyframes positive-run-dashed {
+  0% {
+    stroke-dasharray: 10, 5;
+  }
+
+  to {
+    stroke-dasharray: 20, 10;
+  }
+}
+
+@keyframes positive-run-blend {
+  0% {
+    stroke-dasharray: 10, 10, 2, 10;
+  }
+
+  to {
+    stroke-dasharray: 20 20 4 10;
+  }
+}
+
+@keyframes reverse-run-dotted {
+  0% {
+    stroke-dasharray: 10, 5;
+  }
+
+  to {
+    stroke-dasharray: 5, 5;
+  }
+}
+
+@keyframes reverse-run-dashed {
+  0% {
+    stroke-dasharray: 20, 10;
+  }
+
+  to {
+    stroke-dasharray: 10, 5;
+  }
+}
+
+@keyframes reverse-run-blend {
+  0% {
+    stroke-dasharray: 20 20 4 10;
+  }
+
+  to {
+    stroke-dasharray: 10, 10, 2, 10;
+  }
+}

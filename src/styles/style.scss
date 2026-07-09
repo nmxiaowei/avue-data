@@ -1,0 +1,507 @@
+.build {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  .flex {
+    display: flex;
+    align-items: center;
+  }
+
+  .app {
+    width: 100%;
+    height: calc(100% - 85px);
+    display: flex;
+    box-sizing: border-box;
+  }
+
+  .selectall {
+    position: absolute;
+    border: 1px dotted var(--dotted-border-color);
+    z-index: 10000;
+  }
+
+  .icon {
+    font-size: 20px;
+    margin-right: 10px;
+  }
+
+  .selectbg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 9999;
+  }
+
+  .selectflag {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 9999;
+    cursor: move;
+  }
+
+  .el-menu--horizontal .el-menu .el-menu-item,
+  .el-menu--horizontal .el-menu .el-submenu__title {
+    font-size: 12px;
+  }
+
+  // .el-empty__image {
+  //   svg {
+  //     width: 100px;
+  //     height: 100px;
+  //   }
+  // }
+
+  .menu {
+    position: relative;
+    width: 200px;
+    box-sizing: border-box;
+    height: 100%;
+    color: var(--text-color-secondary);
+  }
+
+  .menu__drag {
+    width: 3px;
+    height: 100%;
+    position: absolute;
+    background-color: var(--menu-drag-color);
+    right: 0;
+    z-index: 1;
+
+    &:hover {
+      background-color: var(--menu-drag-hover-color);
+      cursor: col-resize;
+    }
+  }
+
+  .menu_header {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 1;
+  }
+
+  .menu__scrollbar {
+    padding-top: 50px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .menu__list {
+    padding-left: 10px;
+    padding-top: 5px;
+    box-sizing: border-box;
+  }
+
+  .menu__ul {
+    padding: 0 5px;
+    box-sizing: border-box;
+    input {
+      padding: 8px 5px;
+      flex: 1;
+      margin-right: 2px;
+      box-sizing: border-box;
+      width: 100%;
+      font-size: 12px;
+      outline: none;
+      background-color: transparent;
+      border: none;
+      border-radius: 3px;
+      color: var(--text-color-light);
+      &:hover,
+      &:focus {
+        border: 1px solid var(--border-color-light);
+      }
+    }
+  }
+
+  .menu__item {
+    width: 100%;
+    margin-bottom: 3px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 5px 5px;
+    position: relative;
+    color: var(--text-color-primary);
+    cursor: pointer;
+    border: 1px solid var(--border-color-dark);
+    flex: none;
+    font-size: 12px;
+
+    &.is-over,
+    &:hover {
+      background: var(--bg-color-hover);
+      cursor: pointer;
+
+      .menu__menu {
+        i {
+          display: inline-block;
+        }
+      }
+    }
+
+    &.ghost {
+      opacity: 0.6;
+      color: var(--text-color-primary);
+      background: var(--primary-color) !important;
+      cursor: move;
+    }
+
+    &.is-active {
+      border: 1px solid var(--primary-color);
+      background-color: var(--bg-color-hover);
+    }
+  }
+
+  .menu__menu {
+    position: absolute;
+    right: 3px;
+
+    i {
+      color: var(--text-color-secondary);
+      margin: 0 3px;
+      font-size: 15px;
+      display: none;
+    }
+
+    .is-active {
+      color: var(--primary-color);
+      display: inline-block;
+    }
+  }
+
+  .menu__label {
+    display: flex;
+    align-items: center;
+    width: calc(100% - 105px);
+    overflow: hidden;
+    .index {
+      margin-right: 8px;
+      font-size: 14px;
+    }
+    .el-checkbox {
+      margin-right: 5px;
+    }
+  }
+
+  .menu__button {
+    display: flex;
+
+    li {
+      margin: 0 5px;
+      list-style: none;
+    }
+  }
+
+  .menu__icon {
+    color: var(--primary-color);
+    margin-right: 8px;
+    width: 50px;
+    min-width: 50px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    display: block;
+    background-color: var(--bg-color-secondary);
+    border: 1px solid var(--border-color-base);
+    border-radius: 5px;
+  }
+
+  .menu__item--folder {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    padding: 6px 6px;
+    color: var(--text-color-secondary);
+    font-size: 12px;
+    border-radius: 3px;
+
+    .icon-folder {
+      font-size: 16px;
+      margin-right: 5px;
+    }
+
+    .icon-fold {
+      font-size: 12px;
+      margin-right: 10px;
+      transform: rotate(90deg);
+      display: inline-block;
+      font-weight: bold;
+
+      &.is-active {
+        transform: rotate(180deg);
+      }
+    }
+
+    &.is-active {
+      color: var(--text-color-primary);
+      background: var(--bg-color-tertiary);
+    }
+
+    &.is-over,
+    &:hover {
+      color: var(--text-color-primary);
+      background: var(--bg-color-tertiary);
+      cursor: pointer;
+    }
+  }
+
+  .menu__folder {
+    margin-bottom: 8px;
+
+    &.ghost {
+      opacity: 0.6;
+      color: var(--text-color-primary);
+      background: var(--primary-color) !important;
+      cursor: move;
+    }
+
+    &:hover {
+      & > .menu__item--folder > .menu__menu {
+        i {
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .menu__name {
+    width: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .menu__ul--simple {
+    .menu__icon {
+      display: none;
+    }
+
+    .menu__label {
+      width: calc(100% - 40px);
+      overflow: hidden;
+      display: flex;
+    }
+  }
+
+  .top {
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    background-color: var(--bg-color-overlay);
+  }
+
+  .section {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .refer-line-img {
+    position: absolute;
+    left: 0;
+    z-index: 5;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+
+    img {
+      width: 100%;
+    }
+  }
+
+  .screens {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+  }
+
+  .screens-drag {
+    cursor: pointer;
+  }
+
+  .screen-container {
+    position: relative;
+    width: 5000px;
+    height: 3000px;
+    /* 创建现代点状网格背景 */
+    background-color: var(--bg-color-primary);
+    background-image: radial-gradient(circle, var(--grid-line-color) 1px, transparent 2px);
+    background-size: 20px 20px;
+    background-position:
+      0 0,
+      10px 10px;
+
+    /* 线条网格背景样式 - 可替换上面的点状背景 */
+    &.grid-lines {
+      background-image:
+        linear-gradient(var(--grid-line-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line-color) 1px, transparent 1px);
+      background-size: 20px 20px;
+      background-position: 0 0;
+    }
+
+    /* 双重点状网格 - 更丰富的视觉效果 */
+    &.grid-dots-dual {
+      background-image:
+        radial-gradient(circle, var(--grid-line-color) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size:
+        20px 20px,
+        40px 40px;
+      background-position:
+        0 0,
+        10px 10px;
+    }
+
+    /* 大小不同的点状网格 */
+    &.grid-dots-varied {
+      background-image:
+        radial-gradient(circle, var(--grid-line-color) 0.5px, transparent 0.5px),
+        radial-gradient(circle, var(--primary-color) 1px, transparent 1px);
+      background-size:
+        10px 10px,
+        50px 50px;
+      background-position:
+        0 0,
+        25px 25px;
+    }
+
+    /* 混合网格样式 - 点和线结合 */
+    &.grid-mixed {
+      background-image:
+        radial-gradient(circle, var(--grid-line-color) 1px, transparent 1px),
+        linear-gradient(var(--grid-line-color) 0.5px, transparent 0.5px),
+        linear-gradient(90deg, var(--grid-line-color) 0.5px, transparent 0.5px);
+      background-size:
+        40px 40px,
+        20px 20px,
+        20px 20px;
+      background-position:
+        0 0,
+        0 0,
+        0 0;
+    }
+  }
+
+  .canvas {
+    position: absolute;
+    transform-origin: 0 0;
+    top: 50%;
+    left: 50%;
+  }
+
+  .footer__menu {
+    padding-top: 8px;
+    margin-right: 370px;
+    float: right;
+    width: 300px;
+  }
+
+  .app--none {
+    padding: 0;
+    height: 100%;
+  }
+
+  .app--none .wrapper {
+    position: relative;
+    padding: 0;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .app--none .content {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .container {
+    user-select: none;
+    transform-origin: 0 0;
+    position: relative;
+  }
+
+  .grade {
+    width: 100%;
+    height: 100%;
+    background-size:
+      30px 30px,
+      30px 30px;
+    background-image:
+      linear-gradient(var(--grid-line-color) 1px, transparent 0px),
+      linear-gradient(90deg, var(--grid-line-color) 1px, transparent 0px);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .title {
+    padding: 0 10px;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+    line-height: 40px;
+    height: 40px;
+    text-align: center;
+    font-size: 12px;
+    background-color: var(--bg-color-secondary);
+    border: 1px solid var(--border-color-dark);
+    color: var(--text-color-primary);
+
+    &--left {
+      text-align: left;
+    }
+
+    &_box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    &_menu {
+      display: flex;
+    }
+  }
+
+  .params {
+    width: 330px;
+  }
+}
+
+.views {
+  overflow: hidden;
+  .wrapper {
+    overflow: hidden;
+  }
+}
+
+.dialog {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background-color: var(--color-overlay);
+
+  &__title {
+    font-size: 26px;
+    color: var(--text-color-primary);
+    text-align: center;
+    line-height: 60px;
+  }
+}

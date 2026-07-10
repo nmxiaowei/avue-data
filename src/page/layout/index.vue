@@ -34,7 +34,7 @@ export default {
   name: "index",
   components: {
     navs,
-    logo
+    logo,
   },
   data() {
     return {
@@ -44,13 +44,13 @@ export default {
   computed: {
     layoutClass() {
       return {
-        'layout-top': this.layoutMode === 'top',
-        'layout-side': this.layoutMode === 'side'
+        "layout-top": this.layoutMode === "top",
+        "layout-side": this.layoutMode === "side",
       };
     },
     currentMode() {
-      return this.layoutMode === 'top' ? 'horizontal' : 'vertical';
-    }
+      return this.layoutMode === "top" ? "horizontal" : "vertical";
+    },
   },
   methods: {
     handleChange(item, index) {
@@ -63,7 +63,7 @@ export default {
 };
 </script>
 <style lang="scss">
-@import "@/styles/list.scss";
+@use "@/styles/list.scss";
 .index {
   height: 100%;
   & > .left {

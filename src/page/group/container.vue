@@ -349,6 +349,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/styles/echart.scss";
-@import "@/styles/style.scss";
+@use "@/styles/echart.scss";
+@use "@/styles/style.scss";
 </style>

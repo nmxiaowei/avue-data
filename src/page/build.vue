@@ -1398,8 +1398,8 @@ export default {
 };
 </script>
 <style lang="scss">
-@import "@/styles/style.scss";
-@import "@/styles/list.scss";
+@use "@/styles/style.scss";
+@use "@/styles/list.scss";
 
 // 构建页面布局调整，为底部工具栏留出空间
 .build {
@@ -1411,6 +1411,5 @@ export default {
     flex: 1;
     min-height: 0; // 防止 flex 子元素溢出
   }
-
 }
 </style>

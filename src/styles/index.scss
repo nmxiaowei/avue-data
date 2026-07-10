@@ -4,22 +4,22 @@
  */
 
 // 导入主题变量
-@import './variables';
+@use "./variables";
 
 // 导入基础样式
-@import './common';
+@use "./common";
 
 // 导入页面样式
-@import './list';
-@import './echart';
-@import './style';
+@use "./list";
+@use "./echart";
+@use "./style";
 
 /**
  * 主题过渡动画
  * 为主题切换添加平滑过渡效果
  */
 * {
-  transition: 
+  transition:
     background-color 0.3s ease,
     border-color 0.3s ease,
     color 0.3s ease,
@@ -284,4 +284,4 @@ body {
 .el-result {
   --el-result-title-color: var(--text-color-primary);
   --el-result-subtitle-color: var(--text-color-secondary);
-} 
+}

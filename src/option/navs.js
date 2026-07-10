@@ -19,4 +19,9 @@ export default [
     name: "运行配置",
     path: "/config",
   },
+  {
+    icon: "el-icon-medal",
+    name: "pro专业版",
+    href: "https://data.avuejs.com",
+  },
 ];

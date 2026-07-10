@@ -108,15 +108,7 @@ export default {
       };
     },
     refreshNavs() {
-      const navs = navsConfig
-        .filter(
-          item =>
-            this.$website.ai?.enabled || !item.children?.some(child => child.path === "/model"),
-        )
-        .map(item => this.cloneNav(item))
-        .filter(item => item.path || item.children?.length);
-
-      this.navs = navs;
+      this.navs = navsConfig;
       this.syncActiveState();
     },
     syncActiveState() {

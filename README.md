@@ -116,6 +116,13 @@ docker/       Docker 相关配置
 
 执行 `pnpm build` 后，将 `dist/` 目录部署到静态资源服务器即可。部署前请确认 `public/config.js`、路由模式、接口地址和静态资源路径与目标环境一致。
 
+## 开发与发布流程
+
+- `dev`：日常开发与联调分支。新功能和修复应合入此分支。
+- `master`：正式发布分支，仅接收已验证的发布内容。
+- 发布时，将 `dev` 合入 `master`，更新 [CHANGELOG.md](./CHANGELOG.md)，并在 `master` 创建版本标签，例如 `v3.0.0`。
+- 本次首个正式版本为 `v3.0.0`，发布说明见 [CHANGELOG.md](./CHANGELOG.md)。
+
 ## 贡献
 
 欢迎提交 issue 和 pull request。建议在提交前完成本地启动验证，并说明变更内容、影响范围和验证方式。

@@ -1,8 +1,26 @@
 <template>
   <div class="home-page" v-loading="loading" v-bind="$loadingParams">
+    <header class="home-commandbar">
+      <button class="home-brand" type="button" @click="goPage('/list')">
+        <span class="home-brand__mark"><i></i><i></i><i></i></span>
+        <span>
+          <strong>AVUE DATA</strong>
+          <em>DIGITAL COMMAND CENTER</em>
+        </span>
+      </button>
+      <div class="home-system-status">
+        <i></i>
+        <span>SYSTEM ONLINE</span>
+        <em>OPEN SOURCE</em>
+      </div>
+      <button class="home-commandbar__enter" type="button" @click="goPage('/list')">
+        进入项目管理 <i class="iconfont icon-right"></i>
+      </button>
+    </header>
+
     <section class="home-showcase">
       <div class="home-showcase__content">
-        <span class="home-kicker">AVUE DATA OPEN SOURCE</span>
+        <span class="home-kicker">IMMERSIVE DATA SPACE</span>
         <h1>数据大屏可视化工作台</h1>
         <p>面向数据展示、业务驾驶舱和可视化编排场景，快速完成大屏设计、资源维护、预览发布。</p>
 
@@ -18,26 +36,78 @@
             <span>{{ item.label }}</span>
           </div>
         </div>
+
+        <div class="home-scanner">
+          <div class="home-scanner__head">
+            <span>MODULE SCANNER</span>
+            <i></i>
+          </div>
+          <div class="home-scanner__body">
+            <span>01</span>
+            <div>
+              <strong>可视化设计</strong>
+              <em>拖拽组件，配置图表，发布预览</em>
+            </div>
+          </div>
+          <button type="button" @click="goPage('/list')">ENTER PROJECTS <i class="iconfont icon-right"></i></button>
+        </div>
       </div>
 
-      <div class="home-stage">
-        <div class="home-stage__toolbar">
-          <span></span>
-          <span></span>
-          <span></span>
-          <em>Visual Canvas</em>
+      <div class="home-overview">
+        <div class="home-overview__header">
+          <div>
+            <span class="home-kicker">WORKSPACE PULSE</span>
+            <h2>项目速览</h2>
+          </div>
+          <el-button text type="primary" @click="goPage('/list')">全部项目</el-button>
         </div>
-        <div class="home-stage__screen">
-          <img :src="showcaseCover" alt="" @error="handleCoverError" />
-          <i class="home-stage__scan"></i>
-          <div class="home-stage__panel home-stage__panel--left">
-            <strong>{{ primaryScreen.title || "开源版示例大屏" }}</strong>
-            <span>{{ primaryScreen.width || 1920 }} x {{ primaryScreen.height || 1080 }}</span>
-          </div>
-          <div class="home-stage__panel home-stage__panel--right">
-            <strong>{{ publishedScreens }}</strong>
+
+        <div class="home-overview__summary">
+          <div>
             <span>已发布</span>
+            <strong>{{ publishedScreens }}</strong>
           </div>
+          <div>
+            <span>静态资源</span>
+            <strong>{{ fileTotal }}</strong>
+          </div>
+          <div>
+            <span>待编辑</span>
+            <strong>{{ Math.max(totalScreens - publishedScreens, 0) }}</strong>
+          </div>
+        </div>
+
+        <div class="home-overview__projects">
+          <div class="home-overview__title">
+            <span>最近项目</span>
+            <em>{{ recentScreenList.length }} / {{ totalScreens || 0 }}</em>
+          </div>
+          <template v-if="recentScreenList.length">
+            <button
+              v-for="item in recentScreenList"
+              :key="item.id"
+              class="home-overview__project"
+              type="button"
+              @click="openEditor(item)">
+              <span class="home-overview__project-icon"><i class="iconfont icon-monitor"></i></span>
+              <span class="home-overview__project-info">
+                <strong>{{ getScreenTitle(item) }}</strong>
+                <em>{{ item.width || 1920 }} × {{ item.height || 1080 }}</em>
+              </span>
+              <span class="home-overview__project-status" :class="{ 'is-published': Number(item.status) === 1 }">
+                {{ getScreenStatus(item) }}
+              </span>
+            </button>
+          </template>
+          <div v-else class="home-overview__empty">
+            <span>还没有大屏项目</span>
+            <el-button type="primary" size="small" @click="goPage('/list')">去创建</el-button>
+          </div>
+        </div>
+
+        <div class="home-overview__tip">
+          <i class="iconfont icon-info"></i>
+          <span>从最近项目进入编辑器，继续拖拽组件、配置数据并预览发布。</span>
         </div>
       </div>
     </section>
@@ -74,8 +144,6 @@
 <script>
 import { getList as getVisualList } from "@/api/visual";
 import { getList as getFileList } from "@/api/file";
-
-const DEFAULT_COVER = "/img/bg/bg.png";
 
 export default {
   name: "home",
@@ -117,8 +185,8 @@ export default {
         {}
       );
     },
-    showcaseCover() {
-      return this.getCoverUrl(this.primaryScreen);
+    recentScreenList() {
+      return this.screenList.slice(0, 4);
     },
     metricList() {
       return [
@@ -162,19 +230,11 @@ export default {
         this.loading = false;
       }
     },
-    getAssetUrl(url) {
-      const value = String(url || DEFAULT_COVER).replace(/^\/?public\//, "/");
-      if (/^(https?:|data:|blob:)/.test(value)) return value;
-      return value.startsWith("/") ? value : `/${value}`;
+    getScreenTitle(item) {
+      return item?.title || item?.name || "未命名大屏";
     },
-    getCoverUrl(item) {
-      return this.getAssetUrl(item?.backgroundUrl || DEFAULT_COVER);
-    },
-    handleCoverError(event) {
-      const target = event.target;
-      if (target.dataset.fallback === "true") return;
-      target.dataset.fallback = "true";
-      target.src = this.getAssetUrl(DEFAULT_COVER);
+    getScreenStatus(item) {
+      return Number(item?.status) === 1 ? "已发布" : "编辑中";
     },
     goPage(path) {
       this.$router.push({ path });
@@ -214,14 +274,127 @@ export default {
   color: #f8fafc;
 }
 
+.home-commandbar {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  margin-bottom: 16px;
+  padding: 0 18px;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.7);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
+}
+
+.home-brand,
+.home-commandbar__enter {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+.home-brand {
+  gap: 10px;
+  padding: 0;
+  text-align: left;
+}
+
+.home-brand__mark {
+  display: flex;
+  align-items: end;
+  gap: 3px;
+  height: 18px;
+}
+
+.home-brand__mark i {
+  width: 3px;
+  border-radius: 2px;
+  background: #67e8f9;
+  box-shadow: 0 0 10px rgba(103, 232, 249, 0.6);
+}
+
+.home-brand__mark i:nth-child(1) {
+  height: 8px;
+}
+
+.home-brand__mark i:nth-child(2) {
+  height: 14px;
+}
+
+.home-brand__mark i:nth-child(3) {
+  height: 18px;
+}
+
+.home-brand strong,
+.home-brand em {
+  display: block;
+}
+
+.home-brand strong {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.home-brand em {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.6px;
+}
+
+.home-system-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.home-system-status > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.12);
+}
+
+.home-system-status em {
+  padding-left: 7px;
+  border-left: 1px solid rgba(148, 163, 184, 0.24);
+  color: #67e8f9;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.home-commandbar__enter {
+  gap: 6px;
+  margin-left: 22px;
+  padding: 7px 10px;
+  border: 1px solid rgba(103, 232, 249, 0.32);
+  border-radius: 5px;
+  color: #a5f3fc;
+  font-size: 12px;
+}
+
+.home-commandbar__enter:hover {
+  border-color: #67e8f9;
+  background: rgba(34, 211, 238, 0.1);
+}
+
 .home-showcase {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-  gap: 30px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+  gap: 20px;
   overflow: hidden;
-  min-height: 430px;
-  padding: 34px;
+  min-height: 360px;
+  padding: 28px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 8px;
   background:
@@ -300,6 +473,80 @@ export default {
   display: block;
 }
 
+.home-scanner {
+  max-width: 520px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  border-left-color: #22d3ee;
+  background: rgba(2, 6, 23, 0.48);
+}
+
+.home-scanner__head,
+.home-scanner__body {
+  display: flex;
+  align-items: center;
+}
+
+.home-scanner__head {
+  justify-content: space-between;
+  color: #67e8f9;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+}
+
+.home-scanner__head i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+  animation: home-status 1.6s ease-in-out infinite;
+}
+
+.home-scanner__body {
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.home-scanner__body > span {
+  color: #fbbf24;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-scanner__body strong,
+.home-scanner__body em {
+  display: block;
+}
+
+.home-scanner__body strong {
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+.home-scanner__body em {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.home-scanner button {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #67e8f9;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+}
+
+.home-scanner button:hover {
+  color: #ffffff;
+}
+
 .home-metric strong {
   font-size: 28px;
   line-height: 1;
@@ -311,112 +558,174 @@ export default {
   font-size: 12px;
 }
 
-.home-stage {
-  position: relative;
+.home-overview {
   z-index: 1;
-  align-self: center;
-  overflow: hidden;
+  align-self: stretch;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 22px;
   border: 1px solid rgba(125, 211, 252, 0.28);
   border-radius: 8px;
   background: rgba(2, 6, 23, 0.74);
-  box-shadow: 0 22px 60px rgba(8, 47, 73, 0.46);
+  box-shadow: 0 22px 60px rgba(8, 47, 73, 0.3);
 }
 
-.home-stage__toolbar {
+.home-overview__header,
+.home-overview__title,
+.home-overview__project,
+.home-overview__tip,
+.home-overview__empty {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 14px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.94);
 }
 
-.home-stage__toolbar span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #fb7185;
+.home-overview__header,
+.home-overview__title {
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.home-stage__toolbar span:nth-child(2) {
-  background: #facc15;
-}
-
-.home-stage__toolbar span:nth-child(3) {
-  background: #34d399;
-}
-
-.home-stage__toolbar em {
-  margin-left: auto;
-  color: #94a3b8;
-  font-size: 12px;
-  font-style: normal;
-}
-
-.home-stage__screen {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 16 / 9;
-  min-height: 260px;
-  background:
-    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    #07111f;
-  background-size: 24px 24px;
-}
-
-.home-stage__screen img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.92;
-}
-
-.home-stage__scan {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(103, 232, 249, 0.2) 48%, transparent 100%);
-  transform: translateY(-100%);
-  animation: home-scan 4.8s linear infinite;
-  pointer-events: none;
-}
-
-.home-stage__panel {
-  position: absolute;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  background: rgba(2, 6, 23, 0.72);
-  backdrop-filter: blur(12px);
-}
-
-.home-stage__panel strong {
+.home-overview__header h2 {
+  margin: 12px 0 0;
   color: #ffffff;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.home-overview__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.home-overview__summary > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.home-overview__summary span,
+.home-overview__summary strong {
+  display: block;
+}
+
+.home-overview__summary span,
+.home-overview__title em,
+.home-overview__project-info em {
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 11px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-overview__summary strong {
+  margin-top: 6px;
+  color: #67e8f9;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-overview__projects {
+  flex: 1;
+  min-height: 0;
+  margin-top: 20px;
+}
+
+.home-overview__title {
+  margin-bottom: 8px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.home-overview__project {
+  width: 100%;
+  gap: 10px;
+  padding: 11px 0;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  background: transparent;
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-overview__project:hover .home-overview__project-info strong {
+  color: #67e8f9;
+}
+
+.home-overview__project-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: rgba(34, 211, 238, 0.12);
+  color: #67e8f9;
   font-size: 14px;
 }
 
-.home-stage__panel span {
-  color: #67e8f9;
+.home-overview__project-info {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-overview__project-info strong {
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-overview__project-status {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: 4px;
+  color: #fbbf24;
+  font-size: 10px;
+}
+
+.home-overview__project-status.is-published {
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #6ee7b7;
+}
+
+.home-overview__empty {
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 126px;
+  padding: 0 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 6px;
+  color: #94a3b8;
   font-size: 12px;
 }
 
-.home-stage__panel--left {
-  left: 18px;
-  bottom: 18px;
-  max-width: calc(100% - 150px);
+.home-overview__tip {
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
-.home-stage__panel--right {
-  right: 18px;
-  top: 18px;
-  min-width: 76px;
-  text-align: center;
+.home-overview__tip i {
+  color: #67e8f9;
 }
 
 .home-actions {
@@ -516,13 +825,10 @@ export default {
   text-align: center;
 }
 
-@keyframes home-scan {
-  0% {
-    transform: translateY(-100%);
-  }
-
-  100% {
-    transform: translateY(100%);
+@keyframes home-status {
+  50% {
+    opacity: 0.3;
+    transform: scale(0.7);
   }
 }
 
@@ -550,14 +856,26 @@ export default {
     font-size: 32px;
   }
 
+  .home-commandbar {
+    padding: 0 12px;
+  }
+
+  .home-system-status {
+    display: none;
+  }
+
+  .home-commandbar__enter {
+    margin-left: auto;
+  }
+
   .home-metrics,
   .home-actions,
   .home-flow__items {
     grid-template-columns: 1fr;
   }
 
-  .home-stage__panel--left {
-    max-width: calc(100% - 36px);
+  .home-overview__summary {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -26,8 +26,8 @@
             @dragend="dragend($event, citem.option)"
             draggable="true">
             <div class="component-preview">
+              <i :class="['component-icon', 'iconfont', citem.option.icon || 'icon-component']"></i>
               <div class="component-name">{{ citem.name }}</div>
-              <img :src="getImageUrl(citem.option.img)" class="component-img" />
             </div>
           </div>
         </template>
@@ -125,12 +125,6 @@ export default {
         this.contain.nav.push(obj);
       }
       setTimeout(() => this.contain.selectNav(index));
-    },
-    getImageUrl(img) {
-      if (img && img.startsWith("/img")) {
-        return this.$router.options.base + img.substring(1);
-      }
-      return img;
     },
   },
 };
@@ -287,6 +281,11 @@ export default {
       }
 
       .component-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         width: 100%;
         height: 90px;
         position: relative;
@@ -294,24 +293,29 @@ export default {
         overflow: hidden;
         background: #000;
 
+        .component-icon {
+          color: var(--primary-color);
+          font-size: 32px;
+          line-height: 1;
+          transition: transform 0.25s ease, color 0.25s ease;
+        }
+
         .component-name {
+          max-width: calc(100% - 16px);
           font-size: 11px;
           color: var(--primary-color);
-          padding: 4px 8px;
+          padding: 0 8px;
           line-height: 1.4;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
           font-weight: bold;
         }
+      }
 
-        .component-img {
-          box-sizing: border-box;
-          width: 100%;
-          height: calc(100% - 30px);
-          object-fit: contain;
-          display: block;
-        }
+      &:hover .component-icon {
+        color: var(--text-color-primary);
+        transform: translateY(-2px) scale(1.08);
       }
     }
   }

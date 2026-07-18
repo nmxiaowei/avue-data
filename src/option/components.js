@@ -12,8 +12,11 @@ import progress from "./components/progress.vue";
 import table from "./components/table.vue";
 import gauge from "./components/gauge.vue";
 import rectangle from "./components/rectangle.vue";
+import datetime from "./components/datetime.vue";
+import svg from "./components/svg.vue";
+import vue from "./components/vue.vue";
+import customComponents from "@/components";
 
-const key = "Option";
 const list = [
   main,
   text,
@@ -29,11 +32,27 @@ const list = [
   table,
   gauge,
   rectangle,
+  datetime,
+  svg,
+  vue,
 ];
 
+const customOptionModules = import.meta.glob("../components/**/option.vue", { eager: true });
+const customOptions = Object.values(customOptionModules).reduce((components, module) => {
+  const component = module.default;
+  if (component?.name) {
+    components[component.optionComponentName || component.name + "Option"] = component;
+  }
+  return components;
+}, {});
+
 export default {
-  components: list.reduce((components, component) => {
-    components[component.name + key] = component;
-    return components;
-  }, {}),
+  components: {
+    ...list.reduce((components, component) => {
+      components[component.optionComponentName || component.name + "Option"] = component;
+      return components;
+    }, {}),
+    ...customComponents,
+    ...customOptions,
+  },
 };

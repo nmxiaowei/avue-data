@@ -286,7 +286,8 @@
 import { dicOption } from '@/option/config'
 
 export default {
-  name: 'text',
+  name: 'TextOption',
+  optionComponentName: 'textOption',
   data () {
     return {
       dicOption

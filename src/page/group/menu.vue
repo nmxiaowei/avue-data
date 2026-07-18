@@ -28,7 +28,10 @@
           <span>{{ currentTabLabel }}</span>
         </div>
       </div>
-      <el-scrollbar class="content-scrollbar" :style="contentScrollbarStyle">
+      <el-scrollbar
+        class="content-scrollbar"
+        :class="{ 'content-scrollbar--ai': activeTab === 'ai' }"
+        :style="contentScrollbarStyle">
         <component
           :is="activeComponent"
           v-bind="activeComponentProps"
@@ -40,7 +43,7 @@
 
 <script>
 import { markRaw } from "vue";
-import { Box, ChatRound, Files, Filter } from "@element-plus/icons-vue";
+import { Box, ChatRound, Clock, Files, Filter } from "@element-plus/icons-vue";
 import { createAsyncComponent } from "../utils/asyncComponent";
 
 const MenuAiComponent = markRaw(createAsyncComponent(() => import("./menu-ai.vue")));
@@ -49,12 +52,14 @@ const ComponentsComponent = markRaw(
 );
 const FiltersComponent = markRaw(createAsyncComponent(() => import("@/page/setup/filters.vue")));
 const GroupComponent = markRaw(createAsyncComponent(() => import("@/page/setup/group.vue")));
+const HistoryComponent = markRaw(createAsyncComponent(() => import("@/page/setup/history.vue")));
 
 export default {
   name: "SettingsMenu",
   components: {
     Box,
     ChatRound,
+    Clock,
     Files,
     Filter,
   },
@@ -94,6 +99,12 @@ export default {
           label: "过滤器",
           icon: markRaw(Filter),
           component: FiltersComponent,
+        },
+        {
+          name: "history",
+          label: "历史记录",
+          icon: markRaw(Clock),
+          component: HistoryComponent,
         },
       ],
     };
@@ -246,6 +257,19 @@ export default {
 
       :deep(.menu__ul) {
         padding: 0;
+      }
+
+      &--ai {
+        padding: 0;
+
+        :deep(.el-scrollbar__wrap),
+        :deep(.el-scrollbar__view) {
+          height: 100%;
+        }
+
+        :deep(.el-scrollbar__wrap) {
+          overflow: hidden;
+        }
       }
     }
   }

@@ -484,11 +484,12 @@ import { SketchRule } from "vue3-sketch-ruler";
 import "vue3-sketch-ruler/lib/style.css";
 import _get from "lodash/get";
 import _set from "lodash/set";
-import debounce from "lodash/debounce";
 import { onThemeChange } from "@/utils/theme";
 import { createFile } from "@/utils/utils";
+import { createEditorHistoryController } from "./group/utils/editor-history-controller";
 import { createAsyncComponent } from "./utils/asyncComponent";
 import { Search as ElIconSearch } from "@element-plus/icons-vue";
+import MonacoEditor from "@/page/components/monaco-editor";
 import contentmenu from "@/page/setup/contentmenu.vue";
 // 异步组件导入
 const layer = createAsyncComponent(() => import("./group/layer.vue"));
@@ -505,6 +506,7 @@ export default {
   mixins: [init, components],
   data() {
     return {
+      ElIconSearch,
       navBaseList: [],
       newGroup: "",
       layerType: 0,
@@ -579,6 +581,7 @@ export default {
     SketchRule,
     menuList,
     ElIconSearch,
+    MonacoEditor,
   },
   computed: {
     isDesignMode() {
@@ -726,7 +729,27 @@ export default {
     },
   },
   created() {
-    this.debouncedRecordHistory = debounce(this.doRecordHistory, 300);
+    this.historyController = createEditorHistoryController({
+      getNav: () => this.nav,
+      setNav: nav => {
+        this.nav = nav;
+      },
+      getHistory: () => this.cacheList.history,
+      setHistory: history => {
+        this.cacheList.history = history;
+      },
+      getCurrentIndex: () => this.currentHistoryIndex,
+      setCurrentIndex: index => {
+        this.currentHistoryIndex = index;
+      },
+      getSerializedNav: () => this.cacheList.nav,
+      setSerializedNav: value => {
+        this.cacheList.nav = value;
+      },
+      clone: this.deepClone.bind(this),
+      message: this.$message,
+    });
+    this.debouncedRecordHistory = this.historyController.createDebouncedRecorder();
   },
   mounted() {
     setTimeout(() => {
@@ -738,6 +761,7 @@ export default {
     });
   },
   beforeUnmount() {
+    this.historyController?.dispose();
     // 清理主题变化监听器
     if (this.$themeUnsubscribe) {
       this.$themeUnsubscribe();
@@ -1332,17 +1356,18 @@ export default {
         this.handleScroll();
       });
     },
-    selectNav(item) {
-      const items = Array.isArray(item) ? item : [item];
+    selectNav(item, options = {}) {
+      const items = (Array.isArray(item) ? item : [item]).filter(Boolean);
+      const append = options.append ?? this.isKeysCtrl;
 
-      if (this.isKeysCtrl) {
+      if (append) {
         // Ctrl 多选模式：追加到已选列表
         this.active = [...new Set([...this.active, ...items])];
       } else {
         // 普通模式：替换选中列表
         this.active = items;
       }
-      this.activeIndex = item;
+      this.activeIndex = items.length > 0 ? items[items.length - 1] : "";
     },
     // 取消选中指定的图层
     unselectNav(item) {
@@ -1353,46 +1378,25 @@ export default {
       this.activeIndex = this.active.length > 0 ? this.active[this.active.length - 1] : "";
     },
     doRecordHistory() {
-      try {
-        const nav = JSON.stringify(this.nav);
-        if (nav !== this.cacheList.nav) {
-          this.cacheList.nav = nav;
-          this.addHistoryCache(this.nav);
-        }
-      } catch {}
+      return this.historyController?.record();
     },
     addHistoryCache(val) {
-      if (this.currentHistoryIndex + 1 < this.cacheList.history.length) {
-        this.cacheList.history.splice(this.currentHistoryIndex + 1);
-      }
-      this.cacheList.history.push({
-        nav: this.deepClone(val),
-        timestamp: Date.now(),
-      });
-      this.cacheList.history.splice(100);
-      this.currentHistoryIndex++;
+      return this.historyController?.addSnapshot(val);
     },
     editorUndo() {
-      if (!this.canUndo) {
-        this.$message.warning("暂无可后退操作");
-        return;
-      }
-      this.currentHistoryIndex--;
-      this.recoveryHistoryCache();
+      return this.historyController?.undo();
     },
     editorRedo() {
-      if (!this.canRedo) {
-        this.$message.warning("暂无可前进操作");
-        return;
-      }
-      this.currentHistoryIndex++;
-      this.recoveryHistoryCache();
+      return this.historyController?.redo();
     },
     recoveryHistoryCache() {
-      const prevState = this.cacheList.history[this.currentHistoryIndex];
-      if (!prevState) return;
-      this.nav = this.deepClone(prevState.nav);
-      this.cacheList.nav = JSON.stringify(prevState.nav);
+      return this.historyController?.restore();
+    },
+    goToHistoryIndex(index) {
+      return this.historyController?.goTo(index);
+    },
+    clearHistory() {
+      return this.historyController?.clear();
     },
   },
 };

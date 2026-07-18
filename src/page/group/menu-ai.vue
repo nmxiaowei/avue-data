@@ -435,6 +435,7 @@ export default {
 
 .screen-ai__footer {
   flex-shrink: 0;
+  margin-top: auto;
   padding: 12px;
   border-top: 1px solid var(--border-color-base);
   background: var(--bg-color-secondary);

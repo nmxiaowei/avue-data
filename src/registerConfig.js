@@ -12,12 +12,13 @@ import hljs from "highlight.js"; //导入代码高亮文件
 import "highlight.js/styles/atom-one-dark.css";
 
 import echartComponents from "@/echart/";
+import components from "@/components/";
 
 import error from "./error";
 
 export function registerInstall(app, { config = {}, axios }) {
   config = Object.assign(website, config);
-  let list = { ...echartComponents };
+  let list = { ...echartComponents, ...components };
   Object.keys(list).map(ele => {
     let component = list[ele];
     app.component(component.name, component);

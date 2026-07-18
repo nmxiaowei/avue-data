@@ -10,6 +10,59 @@ const chartData = {
   ],
 };
 
+export const customVueTemplate = `<template>
+  <div class="vue-widget" @click="handleClick">
+    <div class="vue-widget__title">{{ title }}</div>
+    <div class="vue-widget__value">{{ displayValue }}</div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      title: "自定义 Vue 组件",
+    };
+  },
+  computed: {
+    displayValue() {
+      const data = this.dataChart || {};
+      return data.value || data.text || "通过右侧数据配置传入数据";
+    },
+  },
+  methods: {
+    handleClick() {
+      this.$emit("click", this.dataChart);
+    },
+  },
+};
+</script>
+
+<style>
+.vue-widget {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  color: #e0f2fe;
+  border: 1px solid rgba(56, 189, 248, .65);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(14, 116, 144, .72), rgba(15, 23, 42, .9));
+}
+.vue-widget__title {
+  font-size: 16px;
+  opacity: .8;
+}
+.vue-widget__value {
+  margin-top: 12px;
+  font-size: 26px;
+  font-weight: 700;
+}
+</style>`;
+
 export const customEchartFormatter = `(data = {}) => {
   const categories = data.categories || [];
   const series = data.series || [];
@@ -351,23 +404,242 @@ const items = [
       labelShow: true,
     },
   }),
+  createComponent({
+    name: "实时日期",
+    prop: "datetime",
+    img: "datetime.png",
+    width: 360,
+    height: 64,
+    data: {},
+    icon: "icon-datetime",
+    option: {
+      format: "yyyy-MM-dd hh:mm:ss",
+      color: "#ffffff",
+      fontSize: 30,
+      fontWeight: "normal",
+      textAlign: "center",
+      opacity: 1,
+    },
+  }),
+  createComponent({
+    name: "SVG 图标",
+    prop: "svg",
+    img: "svg.png",
+    width: 160,
+    height: 160,
+    data: {},
+    icon: "icon-svg",
+    option: {
+      color: "#38bdf8",
+      fillColor: "#38bdf8",
+      opacity: 1,
+      content:
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 3.1 5.2 2.9L12 10.9 6.8 8 12 5.1Zm-6 5.4 5 2.8v5.2l-5-2.8v-5.2Zm7 8v-5.2l5-2.8v5.2l-5 2.8Z"/></svg>',
+    },
+  }),
+  createComponent({
+    name: "输入框",
+    prop: "input",
+    img: "input.png",
+    width: 360,
+    height: 56,
+    data: {},
+    icon: "icon-vue",
+    option: {
+      type: "text",
+      placeholder: "请输入内容",
+      clearable: true,
+      disabled: false,
+      readonly: false,
+      size: "default",
+    },
+  }),
+  createComponent({
+    name: "下拉选择",
+    prop: "select",
+    img: "select.png",
+    width: 360,
+    height: 56,
+    data: [
+      { label: "选项一", value: "one" },
+      { label: "选项二", value: "two" },
+      { label: "选项三", value: "three" },
+    ],
+    icon: "icon-vue",
+    option: {
+      placeholder: "请选择",
+      clearable: true,
+      disabled: false,
+      multiple: false,
+      filterable: false,
+      size: "default",
+    },
+  }),
+  createComponent({
+    name: "单选组",
+    prop: "radio",
+    img: "radio.png",
+    width: 360,
+    height: 48,
+    data: [
+      { label: "选项一", value: "one" },
+      { label: "选项二", value: "two" },
+    ],
+    icon: "icon-vue",
+    option: { disabled: false, button: false, size: "default" },
+  }),
+  createComponent({
+    name: "复选组",
+    prop: "checkbox",
+    img: "checkbox.png",
+    width: 360,
+    height: 48,
+    data: [
+      { label: "选项一", value: "one" },
+      { label: "选项二", value: "two" },
+    ],
+    icon: "icon-vue",
+    option: { disabled: false, button: false, size: "default" },
+  }),
+  createComponent({
+    name: "开关",
+    prop: "switch",
+    img: "switch.png",
+    width: 100,
+    height: 48,
+    data: {},
+    icon: "icon-vue",
+    option: { disabled: false, loading: false, inlinePrompt: false, size: "default", width: 48 },
+  }),
+  createComponent({
+    name: "日期选择",
+    prop: "datetimes",
+    img: "datetimes.png",
+    width: 360,
+    height: 56,
+    data: {},
+    icon: "icon-datetime",
+    option: {
+      type: "date",
+      placeholder: "选择日期",
+      clearable: true,
+      disabled: false,
+      size: "default",
+      format: "YYYY-MM-DD",
+      valueFormat: "YYYY-MM-DD",
+    },
+  }),
+  createComponent({
+    name: "导航菜单",
+    prop: "menu",
+    img: "menu.png",
+    width: 220,
+    height: 210,
+    data: [
+      { index: "1", title: "首页" },
+      { index: "2", title: "数据中心" },
+      { index: "3", title: "系统设置" },
+    ],
+    icon: "icon-group",
+    option: {
+      mode: "vertical",
+      collapse: false,
+      backgroundColor: "rgba(15, 23, 42, .82)",
+      textColor: "#cbd5e1",
+      activeTextColor: "#38bdf8",
+    },
+  }),
+  createComponent({
+    name: "树形菜单",
+    prop: "tree",
+    img: "tree.png",
+    width: 280,
+    height: 240,
+    data: [
+      {
+        label: "数据资产",
+        value: "data",
+        children: [
+          { label: "数据源", value: "source" },
+          { label: "数据集", value: "dataset" },
+        ],
+      },
+      { label: "可视化大屏", value: "screen" },
+    ],
+    icon: "icon-group",
+    option: {
+      showCheckbox: false,
+      defaultExpandAll: true,
+      expandOnClickNode: true,
+      accordion: false,
+    },
+  }),
+  createComponent({
+    name: "自定义 Vue 组件",
+    prop: "vue",
+    img: "text.png",
+    width: 420,
+    height: 180,
+    data: { value: "Avue Data" },
+    icon: "icon-vue",
+    option: {
+      remote: false,
+      remoteType: "url",
+      src: "",
+      id: "",
+      content: customVueTemplate,
+    },
+  }),
 ];
 
-const basicProps = ["text", "img", "iframe", "video", "flop"];
+const basicProps = ["text", "img", "iframe", "video", "flop", "datetime"];
+const iconProps = ["svg"];
+const formProps = ["input", "select", "radio", "checkbox", "switch", "datetimes"];
+const navigationProps = ["menu", "tree"];
+const customProps = ["vue"];
+const chartProps = ["bar", "common", "line", "pie", "progress", "table", "gauge", "rectangle"];
 
 export default [
   {
     name: "基础组件",
-    icon: "icon-component",
+    icon: "icon-daping",
     children: items
       .filter(option => basicProps.includes(option.component.prop))
+      .map(option => ({ name: option.name, option })),
+  },
+  {
+    name: "图标组件",
+    icon: "icon-svg",
+    children: items
+      .filter(option => iconProps.includes(option.component.prop))
+      .map(option => ({ name: option.name, option })),
+  },
+  {
+    name: "表单组件",
+    icon: "icon-vue",
+    children: items
+      .filter(option => formProps.includes(option.component.prop))
+      .map(option => ({ name: option.name, option })),
+  },
+  {
+    name: "导航组件",
+    icon: "icon-group",
+    children: items
+      .filter(option => navigationProps.includes(option.component.prop))
+      .map(option => ({ name: option.name, option })),
+  },
+  {
+    name: "自定义组件",
+    icon: "icon-vue",
+    children: items
+      .filter(option => customProps.includes(option.component.prop))
       .map(option => ({ name: option.name, option })),
   },
   {
     name: "图表组件",
     icon: "icon-bar",
     children: items
-      .filter(option => !basicProps.includes(option.component.prop))
+      .filter(option => chartProps.includes(option.component.prop))
       .map(option => ({ name: option.name, option })),
   },
 ];

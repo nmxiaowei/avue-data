@@ -193,8 +193,9 @@ export default {
       return document.querySelector(target);
     },
     initFun() {
+      const subgroup = this.$refs.subgroup;
       ["handleRefresh", "getListRef", "getItemRef"].forEach(ele => {
-        this[ele] = this.$refs.subgroup[ele];
+        this[ele] = subgroup[ele].bind(subgroup);
       });
     },
     init() {

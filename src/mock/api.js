@@ -1,5 +1,5 @@
 import { config as defaultScreenConfig } from "@/option/config";
-import componentCategories, { customEchartFormatter } from "@/option/basic-components";
+import componentCategories, { customEchartFormatter, customVueTemplate } from "@/option/basic-components";
 
 const STORAGE_KEY = "avue-data-open:mock";
 
@@ -183,6 +183,12 @@ const componentTemplates = {
     name: "自定义EChart示例",
     type: "echart",
     content: customEchartFormatter,
+  },
+  "local-custom-vue": {
+    id: "local-custom-vue",
+    name: "自定义 Vue 组件示例",
+    type: "vue",
+    content: customVueTemplate,
   },
 };
 

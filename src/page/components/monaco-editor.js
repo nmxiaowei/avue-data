@@ -1,6 +1,7 @@
 /* eslint-disable */
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import "monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution";
+import "monaco-editor/esm/vs/basic-languages/sql/sql.contribution";
 import "monaco-editor/esm/vs/basic-languages/html/html.contribution";
 import "monaco-editor/esm/vs/basic-languages/css/css.contribution";
 // 导入搜索模块和格式化相关模块
@@ -136,6 +137,7 @@ export default {
             <el-dropdown-item command="format"><el-icon><el-icon-sort /></el-icon> 格式化代码</el-dropdown-item>
             <el-dropdown-item command="search"><el-icon><el-icon-search /></el-icon> 搜索替换</el-dropdown-item>
             <el-dropdown-item command="fold" :divided="true"><el-icon><component :is="isFolded ? 'el-icon-arrow-down' : 'el-icon-arrow-up'" /></el-icon> {{ isFolded ? '展开代码' : '折叠代码' }}</el-dropdown-item>
+            <el-dropdown-item v-if="showStructure" command="structure"><el-icon><component :is="structureCollapsed ? 'el-icon-view' : 'el-icon-close'" /></el-icon> {{ structureCollapsed ? '显示结构' : '隐藏结构' }}</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -160,6 +162,36 @@ export default {
      <input type="file" ref="fileInput" @change="onFileSelected" style="display: none;" />
      <input type="file" ref="excelInput" @change="onExcelSelected" accept=".xls,.xlsx" style="display: none;" />
     </div>
+    <div class="monaco-editor-workspace">
+      <aside v-if="showStructure && !structureCollapsed" class="monaco-structure" aria-label="代码结构">
+        <div class="monaco-structure__header">
+          <span class="monaco-structure__file">{{ structureTitle }}</span>
+          <button type="button" class="monaco-structure__close" title="隐藏代码结构" @click="toggleStructurePanel">×</button>
+        </div>
+        <div v-if="visibleStructureNodes.length" class="monaco-structure__tree">
+          <button
+            v-for="node in visibleStructureNodes"
+            :key="node.id"
+            type="button"
+            class="monaco-structure__node"
+            :class="{ 'is-active': activeStructureNodeId === node.id }"
+            :style="{ paddingLeft: (node.level * 16 + 10) + 'px' }"
+            :title="node.label"
+            @click="selectStructureNode(node)">
+            <span
+              v-if="node.children && node.children.length"
+              class="monaco-structure__toggle"
+              :class="{ 'is-expanded': node.expanded }"
+              @click.stop="toggleStructureNode(node)">›</span>
+            <span v-else class="monaco-structure__toggle is-empty"></span>
+            <span class="monaco-structure__icon">{{ getStructureIcon(node) }}</span>
+            <span class="monaco-structure__label">{{ node.label }}</span>
+          </button>
+        </div>
+        <div v-else class="monaco-structure__empty">暂无可识别的代码结构</div>
+      </aside>
+      <div ref="editorHost" class="monaco-editor-host"></div>
+    </div>
   </div>
   `,
   props: {
@@ -183,6 +215,9 @@ export default {
     showToolbar: { type: Boolean, default: true }, //是否显示工具栏
     showCodeBtn: { type: Boolean, default: true }, //是否显示代码库功能
     codeType: { type: String, default: "" }, //代码说明类型
+    showStructure: { type: Boolean, default: true }, // 是否显示左侧代码结构
+    structureMode: { type: String, default: "auto" }, // 代码结构解析模式
+    structureTitle: { type: String, default: "代码结构" }, // 代码结构文件名
   },
   data() {
     return {
@@ -199,6 +234,11 @@ export default {
       _errorTooltipButton: null,
       _errorTooltipEl: null,
       _errorTooltipMouseEnterHandler: null,
+      structureNodes: [],
+      structureCollapsed: false,
+      activeStructureNodeId: "",
+      _structureUpdateTimer: null,
+      _structureDisposables: [],
     };
   },
   watch: {
@@ -216,6 +256,7 @@ export default {
         monaco.editor.setModelLanguage(original, this.language);
         monaco.editor.setModelLanguage(modified, this.language);
       } else monaco.editor.setModelLanguage(this.editor.getModel(), this.language);
+      this.scheduleStructureUpdate();
     },
 
     theme() {
@@ -234,8 +275,25 @@ export default {
         if (this.editor && val !== this._getValue()) {
           this._setValue(val);
         }
+        this.scheduleStructureUpdate();
       },
       deep: true,
+    },
+    showStructure(value) {
+      if (value) {
+        this.$nextTick(() => {
+          this.updateStructure();
+          this.bindStructureEvents();
+          this.editor && this.editor.layout();
+        });
+      } else {
+        this.disposeStructureEvents();
+        this.structureNodes = [];
+        this.activeStructureNodeId = "";
+      }
+    },
+    structureMode() {
+      this.scheduleStructureUpdate();
     },
   },
 
@@ -246,6 +304,19 @@ export default {
         height: !/^\d+$/.test(this.height) ? this.height : `${this.height}px`,
         position: "relative",
       };
+    },
+    visibleStructureNodes() {
+      const nodes = [];
+      const walk = (children, level) => {
+        children.forEach(node => {
+          nodes.push({ ...node, level });
+          if (node.expanded && node.children && node.children.length) {
+            walk(node.children, level + 1);
+          }
+        });
+      };
+      walk(this.structureNodes, 0);
+      return nodes;
     },
   },
 
@@ -276,7 +347,9 @@ export default {
       this._themeUnsubscribe = null;
     }
     clearTimeout(this._tooltipHideTimer);
+    clearTimeout(this._structureUpdateTimer);
     this.removeErrorTooltipListeners();
+    this.disposeStructureEvents();
     this.editor && this.editor.dispose();
     this.editor = null;
     this.disposeDiffModels();
@@ -296,6 +369,280 @@ export default {
       if (!this.editor) return;
       monaco.editor.setTheme(this.resolveMonacoTheme(theme));
     },
+    toggleStructurePanel() {
+      this.structureCollapsed = !this.structureCollapsed;
+      this.$nextTick(() => this.editor && this.editor.layout());
+    },
+    toggleStructureNode(node) {
+      const target = this.findStructureNode(node.id);
+      if (target) target.expanded = !target.expanded;
+    },
+    getStructureIcon(node) {
+      const icons = {
+        section: "<> ",
+        element: "<> ",
+        script: "<> ",
+        style: "{}",
+        selector: "{}",
+        function: "ƒ",
+        variable: "○",
+        default: "○",
+        class: "◇",
+      };
+      return icons[node.type] || "○";
+    },
+    selectStructureNode(node) {
+      const editor = this._getEditor();
+      if (!editor) return;
+
+      this.activeStructureNodeId = node.id;
+      editor.revealPositionInCenter({ lineNumber: node.line, column: node.column });
+      editor.setSelection(
+        new monaco.Range(
+          node.line,
+          node.column,
+          node.line,
+          node.column + Math.max(node.label.length, 1),
+        ),
+      );
+      editor.focus();
+    },
+    findStructureNode(id, nodes = this.structureNodes) {
+      for (const node of nodes) {
+        if (node.id === id) return node;
+        const matched = this.findStructureNode(id, node.children || []);
+        if (matched) return matched;
+      }
+      return null;
+    },
+    disposeStructureEvents() {
+      this._structureDisposables.forEach(disposable => disposable && disposable.dispose());
+      this._structureDisposables = [];
+    },
+    bindStructureEvents() {
+      this.disposeStructureEvents();
+      const editor = this._getEditor();
+      if (!this.showStructure || !editor) return;
+
+      this._structureDisposables.push(
+        editor.onDidChangeCursorPosition(event => this.syncActiveStructureNode(event.position)),
+      );
+    },
+    scheduleStructureUpdate() {
+      if (!this.showStructure) return;
+      clearTimeout(this._structureUpdateTimer);
+      this._structureUpdateTimer = setTimeout(() => this.updateStructure(), 150);
+    },
+    updateStructure() {
+      if (!this.showStructure) return;
+      const code = this._getValue();
+      const expandedNodes = new Map();
+      const saveExpandedState = nodes => {
+        nodes.forEach(node => {
+          expandedNodes.set(node.id, node.expanded);
+          saveExpandedState(node.children || []);
+        });
+      };
+      saveExpandedState(this.structureNodes);
+
+      const applyExpandedState = nodes => {
+        nodes.forEach(node => {
+          node.expanded = expandedNodes.has(node.id) ? expandedNodes.get(node.id) : true;
+          applyExpandedState(node.children || []);
+        });
+      };
+
+      const nodes = this.createStructureNodes(code);
+      applyExpandedState(nodes);
+      this.structureNodes = nodes;
+      const editor = this._getEditor();
+      this.syncActiveStructureNode(editor && editor.getPosition());
+    },
+    syncActiveStructureNode(position) {
+      if (!position) return;
+      let closestNode = null;
+      const walk = nodes => {
+        nodes.forEach(node => {
+          if (position.lineNumber >= node.line && position.lineNumber <= node.endLine) {
+            if (
+              !closestNode ||
+              node.line >= closestNode.line ||
+              node.endLine - node.line < closestNode.endLine - closestNode.line
+            ) {
+              closestNode = node;
+            }
+            walk(node.children || []);
+          }
+        });
+      };
+      walk(this.structureNodes);
+      this.activeStructureNodeId = closestNode ? closestNode.id : "";
+    },
+    createStructureNode(code, type, label, startIndex, endIndex = startIndex, children = []) {
+      const start = this.getCodePosition(code, startIndex);
+      const end = this.getCodePosition(code, Math.max(startIndex, endIndex));
+      return {
+        id: `${type}:${label}:${start.line}:${start.column}`,
+        type,
+        label,
+        line: start.line,
+        column: start.column,
+        endLine: end.line,
+        children,
+        expanded: true,
+      };
+    },
+    getCodePosition(code, index) {
+      const lines = code.slice(0, Math.max(0, index)).split("\n");
+      return {
+        line: lines.length,
+        column: lines[lines.length - 1].length + 1,
+      };
+    },
+    createStructureNodes(code) {
+      if (!code || !code.trim()) return [];
+      const mode = (
+        this.structureMode === "auto" ? this.language : this.structureMode
+      ).toLowerCase();
+      if (mode === "vue" || (/<template(?:\s|>)/i.test(code) && /<script(?:\s|>)/i.test(code))) {
+        return this.parseVueStructure(code);
+      }
+      if (mode === "html" || mode === "xml") return this.parseMarkupStructure(code, 0, code.length);
+      if (mode === "css" || mode === "scss" || mode === "less") {
+        return this.parseStyleStructure(code, 0, code.length);
+      }
+      return this.parseJavaScriptStructure(code, 0, code.length);
+    },
+    parseVueStructure(code) {
+      const nodes = [];
+      const blockPattern = /<(template|script|style)(?:\s[^>]*)?>/gi;
+      let block;
+      while ((block = blockPattern.exec(code))) {
+        const tag = block[1].toLowerCase();
+        const contentStart = blockPattern.lastIndex;
+        const closePattern = new RegExp(`</${tag}\\s*>`, "ig");
+        closePattern.lastIndex = contentStart;
+        const close = closePattern.exec(code);
+        const contentEnd = close ? close.index : code.length;
+        const blockEnd = close ? close.index + close[0].length : code.length;
+        let children = [];
+        if (tag === "template")
+          children = this.parseMarkupStructure(code, contentStart, contentEnd);
+        if (tag === "script")
+          children = this.parseJavaScriptStructure(code, contentStart, contentEnd);
+        if (tag === "style") children = this.parseStyleStructure(code, contentStart, contentEnd);
+        nodes.push(
+          this.createStructureNode(
+            code,
+            tag === "template" ? "section" : tag,
+            tag,
+            block.index,
+            blockEnd,
+            children,
+          ),
+        );
+        blockPattern.lastIndex = blockEnd;
+      }
+      return nodes;
+    },
+    parseMarkupStructure(code, startIndex, endIndex) {
+      const nodes = [];
+      const stack = [{ tag: "", children: nodes }];
+      const content = code.slice(startIndex, endIndex);
+      const tagPattern = /<!--[\s\S]*?-->|<\/?([A-Za-z][\w.-]*)(?:\s[^<>]*?)?\/?\s*>/g;
+      const voidTags = new Set([
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+        "image",
+      ]);
+      let match;
+      while ((match = tagPattern.exec(content))) {
+        if (!match[1]) continue;
+        const fullTag = match[0];
+        const tag = match[1];
+        const absoluteIndex = startIndex + match.index;
+        if (fullTag.startsWith("</")) {
+          for (let index = stack.length - 1; index > 0; index -= 1) {
+            if (stack[index].tag === tag.toLowerCase()) {
+              const endPosition = this.getCodePosition(code, absoluteIndex + fullTag.length);
+              stack[index].node.endLine = endPosition.line;
+              stack.length = index;
+              break;
+            }
+          }
+          continue;
+        }
+
+        const className = fullTag
+          .match(/\bclass\s*=\s*["']([^"']+)["']/i)?.[1]
+          ?.trim()
+          .split(/\s+/)[0];
+        const id = fullTag.match(/\bid\s*=\s*["']([^"']+)["']/i)?.[1]?.trim();
+        const label = `${tag}${className ? `.${className}` : id ? `#${id}` : ""}`;
+        const node = this.createStructureNode(
+          code,
+          "element",
+          label,
+          absoluteIndex,
+          absoluteIndex + fullTag.length,
+        );
+        stack[stack.length - 1].children.push(node);
+        const isSelfClosing = /\/\s*>$/.test(fullTag) || voidTags.has(tag.toLowerCase());
+        if (!isSelfClosing) {
+          stack.push({ tag: tag.toLowerCase(), children: node.children, node });
+        }
+      }
+      return nodes;
+    },
+    parseJavaScriptStructure(code, startIndex, endIndex) {
+      const nodes = [];
+      const content = code.slice(startIndex, endIndex);
+      const declarations = [
+        { pattern: /^[\t ]*export\s+default\b/gm, type: "default", label: "default" },
+        { pattern: /^[\t ]*(?:export\s+)?(?:async\s+)?function\s+([\w$]+)/gm, type: "function" },
+        { pattern: /^[\t ]*(?:export\s+)?class\s+([\w$]+)/gm, type: "class" },
+        {
+          pattern:
+            /^[\t ]*(?:export\s+)?(?:const|let|var)\s+([\w$]+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[\w$]+)\s*=>/gm,
+          type: "function",
+        },
+      ];
+      declarations.forEach(({ pattern, type, label }) => {
+        let match;
+        while ((match = pattern.exec(content))) {
+          const nodeLabel = label || match[1];
+          nodes.push(this.createStructureNode(code, type, nodeLabel, startIndex + match.index));
+        }
+      });
+      return nodes.sort(
+        (first, second) => first.line - second.line || first.column - second.column,
+      );
+    },
+    parseStyleStructure(code, startIndex, endIndex) {
+      const nodes = [];
+      const content = code.slice(startIndex, endIndex);
+      const selectorPattern = /(^|\n)[\t ]*([^@{}][^{\n]*)\s*\{/g;
+      let match;
+      while ((match = selectorPattern.exec(content))) {
+        const selector = match[2].trim().replace(/\s+/g, " ");
+        if (!selector || selector.startsWith("//") || selector.startsWith("&")) continue;
+        const selectorIndex = startIndex + match.index + match[0].indexOf(selector);
+        nodes.push(this.createStructureNode(code, "selector", selector, selectorIndex));
+      }
+      return nodes;
+    },
     /**
      * 处理编辑操作下拉命令
      */
@@ -309,6 +656,9 @@ export default {
           break;
         case "fold":
           this.toggleCodeFolding();
+          break;
+        case "structure":
+          this.toggleStructurePanel();
           break;
       }
     },
@@ -359,11 +709,13 @@ export default {
       Object.assign(options, this._editorBeforeMount()); //编辑器初始化前
 
       // 创建编辑器容器元素
+      const editorHost = this.$refs.editorHost;
+      if (!editorHost) return;
       const editorContainer = document.createElement("div");
-      editorContainer.style.height = this.showToolbar ? "calc(100% - 34px)" : "100%";
+      editorContainer.style.height = "100%";
       editorContainer.style.width = "100%";
       editorContainer.className = "monaco-editor-container";
-      this.$el.appendChild(editorContainer);
+      editorHost.appendChild(editorContainer);
       this.editor = monaco.editor[this.diffEditor ? "createDiffEditor" : "create"](
         editorContainer,
         {
@@ -394,6 +746,8 @@ export default {
       );
       this.diffEditor && this._setModel(this.modelValue, this.original);
       this._editorMounted(this.editor); //编辑器初始化后
+      this.updateStructure();
+      this.bindStructureEvents();
 
       // 绑定_handleResize到当前组件实例
       this._boundHandleResize = this._handleResize.bind(this);
@@ -581,11 +935,13 @@ export default {
         editor.onDidUpdateDiff(event => {
           const value = this._getValue();
           this._emitChange(value, event);
+          this.scheduleStructureUpdate();
         });
       } else {
         editor.onDidChangeModelContent(event => {
           const value = this._getValue();
           this._emitChange(value, event);
+          this.scheduleStructureUpdate();
         });
       }
     },
@@ -637,6 +993,7 @@ export default {
         html: "html",
         htm: "html",
         css: "css",
+        sql: "sql",
         ts: "typescript",
         txt: "plaintext",
       };
@@ -1490,10 +1847,7 @@ export default {
           this._errorTooltipMouseEnterHandler = () => {
             clearTimeout(this._tooltipHideTimer);
           };
-          this._errorTooltipEl.addEventListener(
-            "mouseenter",
-            this._errorTooltipMouseEnterHandler,
-          );
+          this._errorTooltipEl.addEventListener("mouseenter", this._errorTooltipMouseEnterHandler);
           this._errorTooltipEl.addEventListener("mouseleave", this.hideErrorTooltip);
         }
       }

@@ -8,8 +8,7 @@
     @dblclick="handleDblClick"
     @click="handleClick">
     <video
-      :style="[styleChartName, videoStyle, ruleStyle]"
-      :class="ruleClassList"
+      :style="[styleChartName, videoStyle]"
       :muted="option.muted !== false"
       :width="width"
       :height="height"

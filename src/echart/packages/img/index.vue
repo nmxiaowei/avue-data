@@ -7,9 +7,9 @@
     @dblclick="handleDblClick"
     @click="handleClick">
     <img
-      :style="[styleChartName, styleImgName, ruleStyle]"
+      :style="[styleChartName, styleImgName]"
       :src="mappingValue"
-      :class="[b({ rotate: rotate }), ...ruleClassList]"
+      :class="[b({ rotate: rotate })]"
       draggable="false" />
   </div>
 </template>

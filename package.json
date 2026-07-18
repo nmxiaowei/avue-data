@@ -1,8 +1,9 @@
 {
   "name": "avue-data",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "AGPL-3.0 open-source edition of Avue Data, based on the original UI and editor.",
   "license": "AGPL-3.0-only",
+  "type": "module",
   "main": "src/index.js",
   "files": [
     "lib",
@@ -47,11 +48,11 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "^6.0.8",
     "less": "^4.4.1",
     "sass": "^1.37.5",
     "unplugin-auto-import": "^0.11.2",
-    "vite": "^4.5.14",
+    "vite": "^8.1.5",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-plugin-vue-setup-extend": "^0.4.0"

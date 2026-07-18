@@ -1,6 +1,24 @@
 import { defineConfig, loadEnv } from "vite";
 import { resolve } from "path";
 import createVitePlugins from "./vite/plugins";
+
+const manualChunkPackages = {
+  "element-plus": ["element-plus"],
+  avue: ["@smallwei/avue"],
+  "monaco-editor": ["monaco-editor"],
+  vuedraggable: ["vuedraggable"],
+  vendor: ["vue", "vue-router", "vue-i18n", "axios"],
+  lodash: ["lodash"],
+  xlsx: ["xlsx", "exceljs"],
+};
+
+const resolveManualChunk = id => {
+  const normalizedId = id.replaceAll("\\", "/");
+  return Object.entries(manualChunkPackages).find(([, packages]) =>
+    packages.some(packageName => normalizedId.includes(`/node_modules/${packageName}/`)),
+  )?.[0];
+};
+
 // https://vitejs.dev/config/
 export default ({ mode, command }) => {
   const env = loadEnv(mode, process.cwd());
@@ -13,21 +31,14 @@ export default ({ mode, command }) => {
     },
     build: {
       target: "esnext",
-      minify: "esbuild",
+      minify: "oxc",
       // 提升构建速度：关闭 sourcemap
       sourcemap: false,
       // 提升构建速度：关闭 brotli 压缩体积报告
       reportCompressedSize: false,
       // 提升构建速度：增大 chunk 警告阈值，避免无意义的分析开销
       chunkSizeWarningLimit: 8000,
-      // esbuild 压缩配置
-      esbuild: {
-        drop: ["console", "debugger"],
-        minifyWhitespace: true,
-        minifySyntax: true,
-        minifyIdentifiers: true,
-      },
-      rollupOptions: {
+      rolldownOptions: {
         onwarn(warning, warn) {
           if (warning.code === "EVAL" && /node_modules[\\/].*mockjs/.test(warning.id || "")) {
             return;
@@ -35,25 +46,28 @@ export default ({ mode, command }) => {
           warn(warning);
         },
         output: {
-          compact: true,
-          manualChunks: {
-            "element-plus": ["element-plus"],
-            avue: ["@smallwei/avue"],
-            "monaco-editor": ["monaco-editor"],
-            vuedraggable: ["vuedraggable"],
-            // 将大型依赖独立分包，避免重复解析打包
-            vendor: ["vue", "vue-router", "vue-i18n", "axios"],
-            lodash: ["lodash"],
-            xlsx: ["xlsx", "exceljs"],
+          minify: {
+            compress: {
+              dropConsole: true,
+              dropDebugger: true,
+            },
           },
+          manualChunks: resolveManualChunk,
         },
       },
       // 提升构建速度：CSS 代码分离
       cssCodeSplit: true,
     },
+    css: {
+      lightningcss: {
+        errorRecovery: true,
+      },
+    },
     optimizeDeps: {
-      esbuildOptions: {
-        target: "esnext",
+      rolldownOptions: {
+        transform: {
+          target: "esnext",
+        },
       },
       // 预构建大型依赖，加速 dev 冷启动
       include: [

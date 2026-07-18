@@ -6,9 +6,9 @@
        @mouseleave="onMouseLeave"
        @dblclick="handleDblClick"
        @click="handleClick">
-    <div :style="[styleChartName, styleBoxName, ruleStyle]"
+    <div :style="[styleChartName, styleBoxName]"
          ref="box"
-         :class="[b('box'), ...ruleClassList]">
+         :class="[b('box')]">
       <component :is="componentName"
                  ref="text"
                  :class="[b('text'), ellipsisClass, animationClass]"

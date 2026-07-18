@@ -16,8 +16,7 @@
         :height="item.component.height"
         :ref="common.DEAFNAME + item.index"
         :id="common.DEAFNAME + item.index"
-        :active-flag="contain.active.includes(item.index)"
-        v-show="getShow(item) && getHide(item) && !getComnponentName(item)"
+        v-show="getShow(item) && getDisplay(item) && getHide(item) && !getComnponentName(item)"
         @move="handleMove"
         @out="handleOut"
         @over="handleOver"
@@ -44,6 +43,7 @@
       :scale="container.stepScale"
       :disabled="!contain.menuFlag"
       :id="common.DEAFNAME + item.index"
+      v-show="getShow(item) && getDisplay(item) && getHide(item)"
       :ref="common.DEAFNAME + item.index">
       <component
         class="carousel"
@@ -64,7 +64,7 @@
             :is="getComnponentName(item, false)"
             :span="24 / item.gridSpan"
             :key="citem.index"
-            v-if="getDisplay(citem)">
+            v-if="getShow(citem) && getDisplay(citem) && getHide(citem)">
             <temp
               v-if="!citem.children"
               :parent="item"

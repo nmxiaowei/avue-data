@@ -1,6 +1,5 @@
 <template>
-  <div
-    class="temp-wrapper">
+  <div class="temp-wrapper">
     <component
       :id="common.NAME + item.index"
       ref="temp"

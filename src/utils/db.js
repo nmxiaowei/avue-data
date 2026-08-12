@@ -1,11 +1,14 @@
 import { openDB } from "idb";
 
 export const DB_NAME = "avue-data";
-export const DB_VERSION = 4;
+export const DB_VERSION = 6;
 
 export const STORE_NAMES = {
   ERROR_LOGS: "error-logs",
   DATA_FLOW_CHANGES: "data-flow-changes",
+  EDITOR_DRAFTS: "editor-drafts",
+  EDITOR_VERSIONS: "editor-versions",
+  COMPONENT_FAVORITES: "component-favorites",
 };
 
 let dbInstance = null;
@@ -38,6 +41,30 @@ export async function initDB() {
         changeStore.createIndex("source", "source", { unique: false });
         changeStore.createIndex("action", "action", { unique: false });
         changeStore.createIndex("componentId", "componentId", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORE_NAMES.EDITOR_DRAFTS)) {
+        db.createObjectStore(STORE_NAMES.EDITOR_DRAFTS, {
+          keyPath: "visualId",
+        });
+      }
+
+      if (!db.objectStoreNames.contains(STORE_NAMES.EDITOR_VERSIONS)) {
+        const versionStore = db.createObjectStore(STORE_NAMES.EDITOR_VERSIONS, {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        versionStore.createIndex("visualId", "visualId", { unique: false });
+        versionStore.createIndex("timestamp", "timestamp", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORE_NAMES.COMPONENT_FAVORITES)) {
+        const favoriteStore = db.createObjectStore(STORE_NAMES.COMPONENT_FAVORITES, {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        favoriteStore.createIndex("sourceKey", "sourceKey", { unique: false });
+        favoriteStore.createIndex("updatedAt", "updatedAt", { unique: false });
       }
     },
   });

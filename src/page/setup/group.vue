@@ -12,6 +12,20 @@
           :props="{ label: 'name', value: 'id' }"
           placeholder="默认主屏幕"></avue-select>
       </el-form-item>
+      <section class="screen-overview">
+        <div>
+          <span>屏幕总数</span>
+          <strong>{{ screenList.length }}</strong>
+        </div>
+        <div>
+          <span>当前屏组件</span>
+          <strong>{{ getScreenComponentCount(contain.group) }}</strong>
+        </div>
+        <div>
+          <span>轮播队列</span>
+          <strong>{{ carouselList.length }}</strong>
+        </div>
+      </section>
       <ul class="menu__ul" v-loading="groupLoading" v-bind="$loadingParams">
         <li
           @click="handleGroupChange(item)"
@@ -66,56 +80,91 @@
           </span>
         </li>
       </ul>
-      <el-collapse-item title="轮播（预览模式生效）">
+      <el-collapse-item title="轮播管理（发布预览生效）">
         <el-form-item label="开启">
           <avue-switch v-model="contain.config.groupCarousel"></avue-switch>
         </el-form-item>
         <template v-if="contain.config.groupCarousel">
           <el-form-item label="轮播时间">
-            <el-input v-model="contain.config.groupTime" placeholder="3000">
-              <template #append>
-                <span>毫秒</span>
-              </template>
-            </el-input>
+            <div class="carousel-interval-input">
+              <el-input-number
+                v-model="contain.config.groupTime"
+                :min="1000"
+                :max="3600000"
+                :step="1000"
+                controls-position="right" />
+              <span>毫秒</span>
+            </div>
           </el-form-item>
           <el-form-item label="轮播屏幕">
-            <el-dropdown>
-              <el-button type="primary" style="margin: 10px 10px" icon="el-icon-plus">
-                选择轮播屏幕
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <template v-for="(item, index) in groupList">
-                    <el-dropdown-item v-if="index != 0" @click="addList(item)" :key="index">{{
-                      item.name
-                    }}</el-dropdown-item>
+            <div class="carousel-manager">
+              <div class="carousel-manager__actions">
+                <el-dropdown :disabled="!availableGroupList.length">
+                  <el-button type="primary" plain>
+                    <el-icon><el-icon-plus /></el-icon>
+                    添加屏幕
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item
+                        v-for="item in availableGroupList"
+                        :key="item.id"
+                        @click="addList(item)">
+                        {{ item.name }}（{{ getScreenComponentCount(item.id) }} 个组件）
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
                   </template>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+                </el-dropdown>
+                <el-button plain :disabled="!screenList.length" @click="addAllScreensToCarousel">全部加入</el-button>
+                <el-button plain type="danger" :disabled="!carouselList.length" @click="clearCarouselList">清空</el-button>
+              </div>
+              <div class="carousel-manager__preview-actions">
+                <el-button
+                  v-if="!carouselPreviewing"
+                  type="primary"
+                  :disabled="!carouselList.length"
+                  @click="startCarouselPreview">
+                  <el-icon><el-icon-video-play /></el-icon>
+                  编辑器内试播
+                </el-button>
+                <el-button v-else type="warning" @click="stopCarouselPreview(true)">
+                  <el-icon><el-icon-video-pause /></el-icon>
+                  停止试播
+                </el-button>
+              </div>
+              <p class="carousel-manager__tip">拖拽调整轮播顺序；试播仅切换编辑器当前屏幕，不修改发布状态。</p>
+            </div>
+          </el-form-item>
+          <el-form-item label-width="0">
             <draggable
               ghost-class="menu__ghost"
-              class="menu__ul"
-              style="width: 100%"
+              class="carousel-sequence"
               :group="{ name: 'group' }"
               v-model="contain.config.groupList"
-              item-key="index">
+              item-key="id">
               <template #item="{ element, index }">
-                <li class="menu__item" :key="index">
-                  <span class="menu__icon">
-                    <svg-icon icon-class="screen" />
+                <div class="carousel-sequence__item" :class="{ 'is-current': element.id === contain.group }">
+                  <span class="carousel-sequence__order">{{ index + 1 }}</span>
+                  <span class="carousel-sequence__name">
+                    <strong>{{ element.name }}</strong>
+                    <em>{{ getScreenComponentCount(element.id) }} 个组件</em>
                   </span>
-                  <span class="menu__label">
-                    <span class="menu__name">{{ element.name }}</span>
+                  <span class="carousel-sequence__actions">
+                    <el-tooltip content="定位到该屏幕" placement="top">
+                      <el-button circle text @click.stop="handleGroupChange(element)">
+                        <el-icon><el-icon-position /></el-icon>
+                      </el-button>
+                    </el-tooltip>
+                    <el-tooltip content="移出轮播" placement="top">
+                      <el-button circle text type="danger" @click.stop="delList(index)">
+                        <el-icon><el-icon-delete /></el-icon>
+                      </el-button>
+                    </el-tooltip>
                   </span>
-                  <span class="menu__menu">
-                    <el-icon @click.stop="delList(index)">
-                      <el-icon-delete></el-icon-delete>
-                    </el-icon>
-                  </span>
-                </li>
+                </div>
               </template>
             </draggable>
+            <el-empty v-if="!carouselList.length" description="暂未选择轮播屏幕" :image-size="54" />
           </el-form-item>
         </template>
       </el-collapse-item>
@@ -316,12 +365,23 @@ export default {
         code: "(refs)=>{\n\n}",
       },
       editingCommandIndex: -1,
+      carouselPreviewing: false,
+      carouselPreviewTimer: null,
+      carouselPreviewIndex: 0,
+      carouselOriginalGroup: "",
     };
   },
   computed: {
-    groupList() {
-      return this.contain.config.group.filter(item => {
-        return !this.contain.config.groupList.map(ele => ele.id).includes(item.id);
+    screenList() {
+      return Array.isArray(this.contain.config.group) ? this.contain.config.group : [];
+    },
+    carouselList() {
+      return Array.isArray(this.contain.config.groupList) ? this.contain.config.groupList : [];
+    },
+    availableGroupList() {
+      const selectedIds = new Set(this.carouselList.map(item => item.id));
+      return this.screenList.filter(item => {
+        return !selectedIds.has(item.id);
       });
     },
     currentScreenElements() {
@@ -343,10 +403,27 @@ export default {
         await this.fetchRemoteGroupList(val);
       },
     },
+    "contain.config.groupTime"() {
+      if (this.carouselPreviewing) {
+        this.startCarouselPreview();
+      }
+    },
+    carouselList: {
+      handler(list) {
+        if (this.carouselPreviewing && !list.length) {
+          this.stopCarouselPreview(true);
+        }
+      },
+      deep: true,
+    },
+  },
+  beforeUnmount() {
+    this.stopCarouselPreview(false);
   },
   methods: {
     async handleGroupChange(item) {
       if (this.groupLoading) return;
+      if (this.carouselPreviewing) this.stopCarouselPreview(false);
       this.groupLoading = true;
       try {
         this.contain.group = item.id;
@@ -354,11 +431,68 @@ export default {
         this.groupLoading = false;
       }
     },
+    ensureCarouselList() {
+      if (!Array.isArray(this.contain.config.groupList)) {
+        this.contain.config.groupList = [];
+      }
+      return this.contain.config.groupList;
+    },
+    getScreenComponentCount(groupId) {
+      return (this.contain.nav || []).filter(item => String(item.group || "") === String(groupId || "")).length;
+    },
     addList(item) {
-      this.contain.config.groupList.push(item);
+      if (!item || this.carouselList.some(group => group.id === item.id)) return;
+      this.ensureCarouselList().push(item);
     },
     delList(index) {
-      this.contain.config.groupList.splice(index);
+      this.ensureCarouselList().splice(index, 1);
+    },
+    addAllScreensToCarousel() {
+      this.contain.config.groupList = this.screenList.slice();
+      this.$message.success("已将全部屏幕加入轮播队列");
+    },
+    clearCarouselList() {
+      this.stopCarouselPreview(false);
+      this.contain.config.groupList = [];
+    },
+    getCarouselInterval() {
+      const value = Number(this.contain.config.groupTime);
+      return Number.isFinite(value) && value >= 1000 ? value : 3000;
+    },
+    startCarouselPreview() {
+      const list = this.carouselList;
+      if (!list.length) {
+        this.$message.warning("请先添加至少一个轮播屏幕");
+        return;
+      }
+      const originalGroup = this.carouselPreviewing ? this.carouselOriginalGroup : this.contain.group;
+      this.stopCarouselPreview(false);
+      this.carouselPreviewing = true;
+      this.carouselOriginalGroup = originalGroup;
+      const currentIndex = list.findIndex(item => item.id === this.contain.group);
+      this.carouselPreviewIndex = currentIndex >= 0 ? currentIndex : 0;
+
+      const next = () => {
+        const screen = list[this.carouselPreviewIndex];
+        if (!screen) return;
+        this.contain.group = screen.id;
+        this.carouselPreviewIndex = (this.carouselPreviewIndex + 1) % list.length;
+      };
+      next();
+      this.carouselPreviewTimer = setInterval(next, this.getCarouselInterval());
+    },
+    stopCarouselPreview(restoreGroup = false) {
+      if (this.carouselPreviewTimer) {
+        clearInterval(this.carouselPreviewTimer);
+        this.carouselPreviewTimer = null;
+      }
+      const originalGroup = this.carouselOriginalGroup;
+      this.carouselPreviewing = false;
+      this.carouselPreviewIndex = 0;
+      this.carouselOriginalGroup = "";
+      if (restoreGroup && originalGroup !== undefined) {
+        this.contain.group = originalGroup;
+      }
     },
     handleCopy(item) {
       this.$Clipboard({
@@ -422,12 +556,13 @@ export default {
         for (let i = 0; i < this.contain.nav.length; i++) {
           const ele = this.contain.nav[i],
             index = i;
-          if (ele.group == this.contain.group) {
+          if (ele.group == item.id) {
             this.contain.nav.splice(index, 1);
             i--;
           }
         }
         this.contain.config.group.splice(index, 1);
+        this.contain.config.groupList = this.carouselList.filter(group => group.id !== item.id);
         if (this.contain.group == item.id) {
           this.contain.group = index != 0 ? this.contain.config.group[index - 1].id : "";
         }
@@ -631,6 +766,162 @@ export default {
 </script>
 
 <style scoped>
+.screen-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 12px;
+
+  > div {
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--border-color-lighter);
+    border-radius: 6px;
+    background: var(--bg-color-secondary);
+  }
+
+  span,
+  strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: var(--text-color-secondary);
+    font-size: 10px;
+  }
+
+  strong {
+    margin-top: 4px;
+    color: var(--primary-color);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.carousel-manager {
+  width: 100%;
+
+  &__actions,
+  &__preview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__preview-actions {
+    margin-top: 8px;
+  }
+
+  &__tip {
+    margin: 8px 0 0;
+    color: var(--text-color-placeholder);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
+
+.carousel-interval-input {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+
+  :deep(.el-input-number) {
+    width: 100%;
+  }
+
+  span {
+    flex: 0 0 auto;
+    color: var(--text-color-secondary);
+    font-size: 12px;
+  }
+}
+
+.carousel-sequence {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    cursor: grab;
+    border: 1px solid var(--border-color-lighter);
+    border-radius: 6px;
+    background: var(--bg-color-secondary);
+
+    &.is-current {
+      border-color: var(--primary-color);
+      background: var(--primary-lighter-color);
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__order {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-family: Consolas, Monaco, monospace;
+    font-size: 11px;
+    border-radius: 50%;
+    background: var(--primary-lighter-color);
+  }
+
+  &__name {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+
+    strong,
+    em {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      color: var(--text-color-primary);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    em {
+      color: var(--text-color-placeholder);
+      font-size: 10px;
+      font-style: normal;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 1px;
+
+    :deep(.el-button) {
+      width: 25px;
+      min-width: 25px;
+      height: 25px;
+      margin: 0;
+      padding: 0;
+    }
+  }
+}
+
 .menu__item.has-screen-id {
   background-color: var(--primary-lighter-color);
 }

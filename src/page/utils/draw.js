@@ -63,6 +63,7 @@ export default function (safe) {
   if (safe.contain.config.groupCarousel && !safe.isBuild) {
     window.$glob.groupLen = 0;
     if (safe.groupCarouselTimer) clearInterval(safe.groupCarouselTimer);
+    const groupTime = Math.max(1000, Number(safe.contain.config.groupTime) || 3000);
     safe.groupCarouselTimer = setInterval(() => {
       const groupList = safe.contain.config.groupList || [];
       const groupLen = groupList.length;
@@ -70,7 +71,7 @@ export default function (safe) {
       if (window.$glob.groupLen >= groupLen) window.$glob.groupLen = 0;
       window.$glob.group = groupList[window.$glob.groupLen].id;
       window.$glob.groupLen++;
-    }, safe.contain.config.groupTime);
+    }, groupTime);
   }
   let links = safe.contain.config.links;
   if (!safe.validatenull(links)) {

@@ -42,6 +42,11 @@ export function registerRoutes(config) {
           name: "config",
           component: () => import("@/page/list/config.vue"),
         },
+        {
+          path: "edition",
+          name: "edition",
+          component: () => import("@/page/list/edition.vue"),
+        },
       ],
     },
     {

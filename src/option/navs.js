@@ -20,8 +20,8 @@ export default [
     path: "/config",
   },
   {
-    icon: "el-icon-medal",
-    name: "pro专业版",
-    href: "https://data.avuejs.com",
+    icon: "el-icon-tickets",
+    name: "版本功能对比",
+    path: "/edition",
   },
 ];

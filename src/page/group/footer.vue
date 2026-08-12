@@ -259,10 +259,14 @@ const resetZoom = () => {
 /**
  * 显示快捷键弹窗
  */
-const handleKeys = () => {
+const openShortcutHelp = () => {
   if (keysRef.value) {
     keysRef.value.show = true;
   }
+};
+
+const handleKeys = () => {
+  openShortcutHelp();
 };
 
 /**
@@ -310,6 +314,10 @@ defineOptions({
   components: {
     keys,
   },
+});
+
+defineExpose({
+  openShortcutHelp,
 });
 </script>
 

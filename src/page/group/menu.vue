@@ -43,7 +43,7 @@
 
 <script>
 import { markRaw } from "vue";
-import { Box, ChatRound, Clock, Files, Filter } from "@element-plus/icons-vue";
+import { Box, ChatRound, Clock, Collection, DataAnalysis, Files, Filter } from "@element-plus/icons-vue";
 import { createAsyncComponent } from "../utils/asyncComponent";
 
 const MenuAiComponent = markRaw(createAsyncComponent(() => import("./menu-ai.vue")));
@@ -53,6 +53,8 @@ const ComponentsComponent = markRaw(
 const FiltersComponent = markRaw(createAsyncComponent(() => import("@/page/setup/filters.vue")));
 const GroupComponent = markRaw(createAsyncComponent(() => import("@/page/setup/group.vue")));
 const HistoryComponent = markRaw(createAsyncComponent(() => import("@/page/setup/history.vue")));
+const ArchiveComponent = markRaw(createAsyncComponent(() => import("@/page/setup/archives.vue")));
+const MockDataComponent = markRaw(createAsyncComponent(() => import("@/page/setup/mock-data.vue")));
 
 export default {
   name: "SettingsMenu",
@@ -60,6 +62,8 @@ export default {
     Box,
     ChatRound,
     Clock,
+    Collection,
+    DataAnalysis,
     Files,
     Filter,
   },
@@ -89,6 +93,18 @@ export default {
           component: ComponentsComponent,
         },
         {
+          name: "mock-data",
+          label: "数据模拟",
+          icon: markRaw(DataAnalysis),
+          component: MockDataComponent,
+        },
+        {
+          name: "archives",
+          label: "大屏存档",
+          icon: markRaw(Collection),
+          component: ArchiveComponent,
+        },
+        {
           name: "groups",
           label: "多屏幕",
           icon: markRaw(Files),
@@ -102,7 +118,7 @@ export default {
         },
         {
           name: "history",
-          label: "历史记录",
+          label: "操作历史",
           icon: markRaw(Clock),
           component: HistoryComponent,
         },
@@ -131,6 +147,7 @@ export default {
       return typeof val === "number" ? `${val}px` : val;
     },
     handleInitActive() {
+      if (this.activeTab === "mock-data") return;
       this.$emit("init-active");
     },
     handleDrag(e, name) {

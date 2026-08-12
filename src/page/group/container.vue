@@ -245,6 +245,7 @@ export default {
         };
         this.setScale();
         document.title = this.$website.title + "-" + this.contain.config.title;
+        this.contain.handleEditorDataLoaded?.();
         if (this.isBuild) return initDraw(this);
         this.$refs.loading.hide();
         initDraw(this);

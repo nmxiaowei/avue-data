@@ -100,6 +100,7 @@
             </div>
           </div>
         </div>
+        <canvas-minimap v-if="isDesignMode"></canvas-minimap>
         <!-- 底部工具栏 -->
         <footer-toolbar ref="footer"></footer-toolbar>
       </div>
@@ -484,9 +485,17 @@ import { SketchRule } from "vue3-sketch-ruler";
 import "vue3-sketch-ruler/lib/style.css";
 import _get from "lodash/get";
 import _set from "lodash/set";
+import debounce from "lodash/debounce";
 import { onThemeChange } from "@/utils/theme";
 import { createFile } from "@/utils/utils";
 import { createEditorHistoryController } from "./group/utils/editor-history-controller";
+import {
+  deleteEditorVersion,
+  getEditorDraft,
+  getEditorVersions,
+  saveEditorDraft,
+  saveEditorVersion,
+} from "@/utils/editorLocalStore";
 import { createAsyncComponent } from "./utils/asyncComponent";
 import { Search as ElIconSearch } from "@element-plus/icons-vue";
 import MonacoEditor from "@/page/components/monaco-editor";
@@ -501,6 +510,7 @@ const screen = createAsyncComponent(() => import("@/page/setup/screen.vue"));
 const codeedit = createAsyncComponent(() => import("./group/code.vue"));
 const footerToolbar = createAsyncComponent(() => import("./group/footer.vue"));
 const menuList = createAsyncComponent(() => import("./group/menu.vue"));
+const canvasMinimap = createAsyncComponent(() => import("./group/canvas-minimap.vue"));
 
 export default {
   mixins: [init, components],
@@ -512,6 +522,11 @@ export default {
       layerType: 0,
       layerSearch: "",
       currentHistoryIndex: -1,
+      localDraftReady: false,
+      localDraftSaving: false,
+      localDraftTimestamp: null,
+      localDraftError: false,
+      localVersions: [],
       menuShow: true,
       paramsShow: true,
       cacheList: {
@@ -577,6 +592,7 @@ export default {
     dataindex,
     contentmenu,
     footerToolbar,
+    canvasMinimap,
     screen,
     SketchRule,
     menuList,
@@ -703,6 +719,13 @@ export default {
     nav: {
       handler() {
         this.debouncedRecordHistory();
+        this.queueLocalDraft();
+      },
+      deep: true,
+    },
+    config: {
+      handler() {
+        this.queueLocalDraft();
       },
       deep: true,
     },
@@ -750,6 +773,7 @@ export default {
       message: this.$message,
     });
     this.debouncedRecordHistory = this.historyController.createDebouncedRecorder();
+    this.debouncedSaveLocalDraft = debounce(() => this.saveLocalDraft(), 1200);
   },
   mounted() {
     setTimeout(() => {
@@ -762,6 +786,7 @@ export default {
   },
   beforeUnmount() {
     this.historyController?.dispose();
+    this.debouncedSaveLocalDraft?.flush?.();
     // 清理主题变化监听器
     if (this.$themeUnsubscribe) {
       this.$themeUnsubscribe();
@@ -814,6 +839,148 @@ export default {
     // 检查是否有未保存的更改
     hasUnsavedChanges() {
       return this.cacheList.history.length > 1 || this.currentHistoryIndex > 0;
+    },
+    getEditorStorageId() {
+      return String(this.id || this.visualId || "").trim();
+    },
+    cloneEditorState(value, fallback = null) {
+      try {
+        const visited = new WeakSet();
+        return JSON.parse(
+          JSON.stringify(value, (key, current) => {
+            if (key === "$parent" || typeof current === "function") return undefined;
+            if (current && typeof current === "object") {
+              if (visited.has(current)) return undefined;
+              visited.add(current);
+            }
+            return current;
+          }),
+        );
+      } catch {
+        return fallback;
+      }
+    },
+    getEditorDraftSignature() {
+      try {
+        return JSON.stringify({
+          config: this.cloneEditorState(this.config, {}),
+          nav: this.cloneEditorState(this.nav, []),
+        });
+      } catch {
+        return "";
+      }
+    },
+    getEditorSnapshot() {
+      return {
+        visualId: this.getEditorStorageId(),
+        title: this.config.title,
+        config: this.cloneEditorState(this.config, {}),
+        nav: this.cloneEditorState(this.nav, []),
+      };
+    },
+    queueLocalDraft() {
+      if (!this.localDraftReady) return;
+      this.debouncedSaveLocalDraft?.();
+    },
+    async saveLocalDraft() {
+      const snapshot = this.getEditorSnapshot();
+      if (!snapshot.visualId) return false;
+
+      this.localDraftSaving = true;
+      this.localDraftError = false;
+      try {
+        await saveEditorDraft(snapshot);
+        this.localDraftTimestamp = Date.now();
+        return true;
+      } catch (error) {
+        console.warn("本地草稿保存失败", error);
+        this.localDraftError = true;
+        return false;
+      } finally {
+        this.localDraftSaving = false;
+      }
+    },
+    async refreshLocalVersions() {
+      const visualId = this.getEditorStorageId();
+      this.localVersions = visualId ? await getEditorVersions(visualId) : [];
+      return this.localVersions;
+    },
+    resetHistoryForCurrentCanvas() {
+      this.clearHistory();
+    },
+    async handleEditorDataLoaded() {
+      const visualId = this.getEditorStorageId();
+      if (!visualId) return;
+
+      this.localDraftReady = false;
+      this.debouncedSaveLocalDraft?.cancel?.();
+      this.resetHistoryForCurrentCanvas();
+
+      try {
+        const [draft] = await Promise.all([getEditorDraft(visualId), this.refreshLocalVersions()]);
+        this.localDraftTimestamp = draft?.timestamp || null;
+      } catch (error) {
+        if (error !== "cancel" && error !== "close") {
+          console.warn("读取本地编辑记录失败", error);
+        }
+      } finally {
+        this.localDraftReady = true;
+      }
+    },
+    applyEditorSnapshot(snapshot) {
+      if (!snapshot || !Array.isArray(snapshot.nav) || !snapshot.config) return false;
+
+      this.localDraftReady = false;
+      this.config = this.cloneEditorState(snapshot.config, {});
+      this.nav = this.cloneEditorState(snapshot.nav, []);
+      this.handleInitActive();
+      this.resetHistoryForCurrentCanvas();
+      this.$nextTick(() => {
+        this.$refs.container?.setScale?.();
+        this.localDraftReady = true;
+        this.queueLocalDraft();
+      });
+      return true;
+    },
+    async saveLocalVersion(name = "未命名版本") {
+      const snapshot = this.getEditorSnapshot();
+      if (!snapshot.visualId) {
+        this.$message.warning("当前项目尚未初始化，无法保存本地版本");
+        return false;
+      }
+
+      await saveEditorVersion({ ...snapshot, name });
+      await this.refreshLocalVersions();
+      return true;
+    },
+    async restoreLocalVersion(version) {
+      const draftSaved = await this.saveLocalDraft();
+      if (!draftSaved) {
+        this.$message.warning("当前内容未能写入本地草稿，请确认浏览器存储空间后再恢复版本");
+        return false;
+      }
+      if (!this.applyEditorSnapshot(version)) return false;
+      this.$message.success("已恢复本地版本");
+      return true;
+    },
+    async restoreLocalDraft() {
+      const draft = await getEditorDraft(this.getEditorStorageId());
+      if (!draft) {
+        this.$message.warning("未找到可恢复的自动存档");
+        return false;
+      }
+      const draftSaved = await this.saveLocalDraft();
+      if (!draftSaved) {
+        this.$message.warning("当前内容未能自动保存，暂不恢复存档");
+        return false;
+      }
+      if (!this.applyEditorSnapshot(draft)) return false;
+      this.$message.success("已恢复自动存档");
+      return true;
+    },
+    async removeLocalVersion(id) {
+      await deleteEditorVersion(id);
+      await this.refreshLocalVersions();
     },
     setGroupByTree(item, groupId) {
       if (!item) return;
@@ -1097,6 +1264,7 @@ export default {
         C: 67,
         D: 68,
         E: 69,
+        F1: 112,
         G: 71,
         H: 72,
         L: 76,
@@ -1118,6 +1286,12 @@ export default {
 
         if (!this.menuFlag) return;
         if (!this.isDesignMode) return;
+
+        if (keyCode === KEYS.F1) {
+          this.$refs.footer?.openShortcutHelp?.();
+          e.preventDefault();
+          return;
+        }
 
         // 检查鼠标是否在画布中，不在画布中则不处理快捷键
         if (!this.isMouseInCanvas) {

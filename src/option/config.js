@@ -73,7 +73,7 @@ export const config = {
   group: [],
   groupCarousel: false,
   groupList: [],
-  groupTime: 0,
+  groupTime: 3000,
   groupId: "",
   filters: {},
   theme: themeList,

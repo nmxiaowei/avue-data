@@ -418,6 +418,8 @@ export const dicOption = {
     "table",
     "gauge",
     "rectangle",
+    "kpi",
+    "map",
   ],
   barList: ["bar", "line"],
   mappingList: ["text", "iframe", "img"],

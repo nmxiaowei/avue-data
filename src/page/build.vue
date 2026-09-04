@@ -225,6 +225,26 @@
                     <el-button type="primary" @click="handleMoveGroup">移动</el-button>
                   </div>
                 </el-form-item>
+                <el-form-item label="等距分布">
+                  <div class="avue-flex">
+                    <el-button
+                      size="small"
+                      @click="$refs.contentmenu.handleDistribute('h')">横向等距</el-button>
+                    <el-button
+                      size="small"
+                      @click="$refs.contentmenu.handleDistribute('v')">纵向等距</el-button>
+                  </div>
+                </el-form-item>
+                <el-form-item label="统一尺寸">
+                  <div class="avue-flex">
+                    <el-button
+                      size="small"
+                      @click="$refs.contentmenu.handleSameSize('width')">统一宽度</el-button>
+                    <el-button
+                      size="small"
+                      @click="$refs.contentmenu.handleSameSize('height')">统一高度</el-button>
+                  </div>
+                </el-form-item>
                 <el-form-item label-width="0">
                   <el-button type="primary" class="block" @click="$refs.contentmenu.handleCompose"
                     >成组</el-button

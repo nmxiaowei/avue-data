@@ -1,6 +1,6 @@
 {
   "name": "avue-data",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "AGPL-3.0 open-source edition of Avue Data, based on the original UI and editor.",
   "license": "AGPL-3.0-only",
   "type": "module",

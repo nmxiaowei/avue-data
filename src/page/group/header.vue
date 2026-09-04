@@ -69,6 +69,22 @@
               </el-icon>
               <span>保存并截图</span>
             </div>
+            <div class="head-more-menu__item" @click="handleExportPng">
+              <i class="iconfont icon-img"></i>
+              <span>导出 PNG 图片</span>
+            </div>
+            <div class="head-more-menu__item" @click="handleExportPdf">
+              <i class="iconfont icon-pdf"></i>
+              <span>导出 PDF 文档</span>
+            </div>
+            <div class="head-more-menu__item" @click="handleExportOffline">
+              <i class="iconfont icon-html"></i>
+              <span>导出离线大屏(单文件HTML)</span>
+            </div>
+            <div class="head-more-menu__item" @click="handleSaveTemplate">
+              <i class="iconfont icon-moban"></i>
+              <span>保存为整屏模板</span>
+            </div>
           </div>
         </el-popover>
         <el-popconfirm title="是否清空当前画布?" @confirm="handleClear()">
@@ -152,6 +168,9 @@
 <script>
 import { dataURLtoFile } from "@/utils/utils";
 import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
+import { buildOfflineHtml } from "@/utils/offlineExport";
+import { saveTemplate } from "@/utils/templateStore";
 import result from "./result.vue";
 import { uploadImg, updateComponent } from "@/api/visual";
 import share from "./share.vue";
@@ -322,6 +341,115 @@ export default {
         .catch(() => {
           this.$message.error("图片导出失败");
         });
+    },
+    handleExportPng() {
+      this.exportImg()
+        .then(canvas => {
+          this.downFile(canvas.toDataURL("image/png"), this.contain.config.title + ".png");
+          this.$message.success("PNG 图片导出成功");
+        })
+        .catch(() => {
+          this.$message.error("PNG 图片导出失败");
+        });
+    },
+    handleExportPdf() {
+      this.exportImg()
+        .then(canvas => {
+          // jsPDF 单边上限保护,超长时等比缩放
+          const maxSide = 14400;
+          const ratio = Math.min(1, maxSide / Math.max(canvas.width, canvas.height));
+          const pdf = new jsPDF({
+            orientation: canvas.width >= canvas.height ? "landscape" : "portrait",
+            unit: "px",
+            format: [canvas.width * ratio, canvas.height * ratio],
+            compress: true,
+          });
+          pdf.addImage(
+            canvas.toDataURL("image/jpeg", 0.92),
+            "JPEG",
+            0,
+            0,
+            canvas.width * ratio,
+            canvas.height * ratio,
+            undefined,
+            "FAST",
+          );
+          pdf.save((this.contain.config.title || "大屏") + ".pdf");
+          this.$message.success("PDF 文档导出成功");
+        })
+        .catch(err => {
+          console.warn("PDF 导出失败", err);
+          this.$message.error("PDF 文档导出失败");
+        });
+    },
+    // 导出离线单文件大屏(内联 echarts/地图与静态数据,双击即可演示)
+    async handleExportOffline() {
+      this.saveMoreVisible = false;
+      this.loading = this.$loading({
+        lock: true,
+        text: "正在生成离线大屏文件…",
+        spinner: "el-icon-loading",
+        background: "var(--color-overlay)",
+      });
+      try {
+        const { html, meta } = await buildOfflineHtml(this.contain.config, this.contain.nav, {
+          group: this.contain.group || "",
+        });
+        if (!html) {
+          this.$message.error("离线大屏生成失败");
+          return;
+        }
+        const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = (meta.title || "大屏") + "-离线版.html";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+        this.$message.success(
+          `已导出离线大屏「${meta.title}」(${meta.rendered} 个组件,${meta.screenW}×${meta.screenH})`,
+        );
+      } catch (error) {
+        console.warn("导出离线大屏失败", error);
+        this.$message.error("导出离线大屏失败,请确认在服务环境下导出");
+      } finally {
+        this.loading && this.loading.close();
+      }
+    },
+    // 保存当前大屏为整屏模板(IndexedDB),供“模板库”套用
+    async handleSaveTemplate() {
+      this.saveMoreVisible = false;
+      const config = this.contain.config;
+      let name;
+      try {
+        const { value } = await this.$prompt("模板名称", "保存为整屏模板", {
+          inputValue: (config.title || "未命名模板") + " 模板",
+          inputPlaceholder: "例如:领导驾驶舱(深色)",
+          confirmButtonText: "保存",
+          cancelButtonText: "取消",
+          inputValidator: value => Boolean(value && value.trim()) || "请输入模板名称",
+        });
+        name = value.trim();
+      } catch (e) {
+        return;
+      }
+      try {
+        const record = await saveTemplate({
+          name,
+          type: "screen",
+          width: config.width,
+          height: config.height,
+          detail: JSON.parse(JSON.stringify(config)),
+          nav: JSON.parse(JSON.stringify(this.contain.nav)),
+          remark: "",
+        });
+        this.$message.success(`整屏模板「${record.name}」已保存,可在“模板库”套用`);
+      } catch (error) {
+        console.warn("保存模板失败", error);
+        this.$message.error("保存模板失败");
+      }
     },
     handleShare() {
       this.$refs.share.handleShow();

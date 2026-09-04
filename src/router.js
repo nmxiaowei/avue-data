@@ -38,6 +38,31 @@ export function registerRoutes(config) {
           component: () => import("@/page/list/file.vue"),
         },
         {
+          path: "dataset",
+          name: "dataset",
+          component: () => import("@/page/modules/dataset.vue"),
+        },
+        {
+          path: "template",
+          name: "template",
+          component: () => import("@/page/modules/template.vue"),
+        },
+        {
+          path: "wall",
+          name: "wall",
+          component: () => import("@/page/modules/wall.vue"),
+        },
+        {
+          path: "monitor",
+          name: "monitor",
+          component: () => import("@/page/modules/monitor.vue"),
+        },
+        {
+          path: "trash",
+          name: "trash",
+          component: () => import("@/page/modules/trash.vue"),
+        },
+        {
           path: "config",
           name: "config",
           component: () => import("@/page/list/config.vue"),

@@ -1,7 +1,7 @@
 import { openDB } from "idb";
 
 export const DB_NAME = "avue-data";
-export const DB_VERSION = 6;
+export const DB_VERSION = 8;
 
 export const STORE_NAMES = {
   ERROR_LOGS: "error-logs",
@@ -9,6 +9,8 @@ export const STORE_NAMES = {
   EDITOR_DRAFTS: "editor-drafts",
   EDITOR_VERSIONS: "editor-versions",
   COMPONENT_FAVORITES: "component-favorites",
+  DATASETS: "datasets",
+  TEMPLATES: "templates",
 };
 
 let dbInstance = null;
@@ -65,6 +67,25 @@ export async function initDB() {
         });
         favoriteStore.createIndex("sourceKey", "sourceKey", { unique: false });
         favoriteStore.createIndex("updatedAt", "updatedAt", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORE_NAMES.DATASETS)) {
+        const datasetStore = db.createObjectStore(STORE_NAMES.DATASETS, {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        datasetStore.createIndex("name", "name", { unique: false });
+        datasetStore.createIndex("updatedAt", "updatedAt", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORE_NAMES.TEMPLATES)) {
+        const templateStore = db.createObjectStore(STORE_NAMES.TEMPLATES, {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        templateStore.createIndex("name", "name", { unique: false });
+        templateStore.createIndex("type", "type", { unique: false });
+        templateStore.createIndex("updatedAt", "updatedAt", { unique: false });
       }
     },
   });

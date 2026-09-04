@@ -236,6 +236,62 @@ const items = [
     },
   }),
   createComponent({
+    name: "科技边框",
+    prop: "border",
+    img: "rectangle.png",
+    width: 420,
+    height: 260,
+    data: {},
+    icon: "icon-biankuang",
+    option: {
+      type: 1,
+      color: "#38bdf8",
+      color2: "rgba(56, 189, 248, 0.25)",
+      backgroundColor: "rgba(8, 18, 36, 0.25)",
+      borderWidth: 1,
+      glow: true,
+      decor: false,
+      titleShow: false,
+      title: "",
+      titleColor: "#38bdf8",
+      titleFontSize: 18,
+      titleFontWeight: "bold",
+      titlePosition: "left",
+    },
+  }),
+  createComponent({
+    name: "KPI指标卡",
+    prop: "kpi",
+    img: "flop.png",
+    width: 300,
+    height: 130,
+    data: {
+      title: "本月销售额",
+      value: 328000,
+      unit: "元",
+      trend: 12.5,
+      subtitle: "",
+    },
+    icon: "icon-flop",
+    option: {
+      valueColor: "#ffffff",
+      valueFontSize: 40,
+      decimals: 0,
+      thousands: true,
+      unitFontSize: 16,
+      titleColor: "#cbd5e1",
+      titleFontSize: 16,
+      trendShow: true,
+      trendMode: "percent",
+      trendInvert: false,
+      trendFontSize: 13,
+      prefix: "",
+      decor: true,
+      backgroundColor: "rgba(13, 28, 52, 0.55)",
+      borderRadius: 6,
+    },
+  }),
+  createComponent({
     name: "柱状图",
     prop: "bar",
     img: "bar.png",
@@ -402,6 +458,55 @@ const items = [
       borderWidth: 1,
       borderColor: "#0f172a",
       labelShow: true,
+    },
+  }),
+  createComponent({
+    name: "地图",
+    prop: "map",
+    img: "map.png",
+    width: 520,
+    height: 380,
+    data: [
+      { name: "广东", value: 128 },
+      { name: "江苏", value: 116 },
+      { name: "山东", value: 105 },
+      { name: "浙江", value: 96 },
+      { name: "河南", value: 88 },
+      { name: "四川", value: 82 },
+      { name: "湖北", value: 76 },
+      { name: "福建", value: 62 },
+      { name: "陕西", value: 55 },
+      { name: "云南", value: 48 },
+    ],
+    icon: "icon-map",
+    option: {
+      mapType: "map",
+      mapKey: "china",
+      mapName: "",
+      mapUrl: "",
+      seriesName: "数值",
+      roam: true,
+      zoom: 1,
+      labelShow: false,
+      labelColor: "#cbd5e1",
+      areaColor: "rgba(15, 82, 150, 0.35)",
+      borderColor: "#2ea8ff",
+      borderWidth: 1,
+      emphasizeColor: "rgba(56, 189, 248, 0.55)",
+      visualMapShow: true,
+      visualMinColor: "#0e4f8f",
+      visualMidColor: "#1e88c9",
+      visualMaxColor: "#ffd24d",
+      visualMin: 0,
+      visualMax: 130,
+      ripple: true,
+      symbolMin: 8,
+      symbolMax: 36,
+      pointColor: "#38e1ff",
+      pointLabelShow: true,
+      lineEffect: true,
+      lineColor: "#38e1ff",
+      lineWidth: 1,
     },
   }),
   createComponent({
@@ -592,12 +697,12 @@ const items = [
   }),
 ];
 
-const basicProps = ["text", "img", "iframe", "video", "flop", "datetime"];
+const basicProps = ["text", "img", "iframe", "video", "flop", "datetime", "border", "kpi"];
 const iconProps = ["svg"];
 const formProps = ["input", "select", "radio", "checkbox", "switch", "datetimes"];
 const navigationProps = ["menu", "tree"];
 const customProps = ["vue"];
-const chartProps = ["bar", "common", "line", "pie", "progress", "table", "gauge", "rectangle"];
+const chartProps = ["bar", "common", "line", "pie", "progress", "table", "gauge", "rectangle", "map"];
 
 export default [
   {

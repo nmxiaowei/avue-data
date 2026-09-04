@@ -251,6 +251,61 @@
           <svg-icon icon-class="pos6" />
           底部对齐
         </li>
+        <li class="contentmenu__separator"></li>
+        <li class="contentmenu__item" @click="handleDistribute('h')">
+          <el-icon>
+            <Rank />
+          </el-icon>
+          水平等距分布
+        </li>
+        <li class="contentmenu__item" @click="handleDistribute('v')">
+          <el-icon>
+            <Rank style="transform: rotate(90deg)" />
+          </el-icon>
+          垂直等距分布
+        </li>
+        <li class="contentmenu__item" @click="handleSameSize('width')">
+          <el-icon>
+            <ScaleToOriginal />
+          </el-icon>
+          统一宽度
+        </li>
+        <li class="contentmenu__item" @click="handleSameSize('height')">
+          <el-icon>
+            <FullScreen />
+          </el-icon>
+          统一高度
+        </li>
+      </ul>
+    </li>
+
+    <!-- 一键换肤 -->
+    <li class="contentmenu__item">
+      <i class="iconfont icon-theme"></i>
+      <span>换肤</span>
+      <el-icon class="contentmenu__list--icon">
+        <el-icon-caret-right />
+      </el-icon>
+      <ul class="contentmenu contentmenu__list">
+        <li
+          v-for="(theme, id) in themeList"
+          :key="'active-' + id"
+          class="contentmenu__item"
+          @click="handleApplySkin(id, 'active')">
+          <span class="skin-dot"
+                :style="{ background: theme.color[0] }"></span>
+          选中组件 · {{ theme.name }}
+        </li>
+        <li class="contentmenu__separator"></li>
+        <li
+          v-for="(theme, id) in themeList"
+          :key="'screen-' + id"
+          class="contentmenu__item"
+          @click="handleApplySkin(id, 'screen')">
+          <span class="skin-dot"
+                :style="{ background: theme.color[0] }"></span>
+          整屏应用 · {{ theme.name }}
+        </li>
       </ul>
     </li>
 
@@ -286,6 +341,62 @@
 import { dataURLtoFile, createFile, uuid } from "@/utils/utils";
 import html2canvas from "html2canvas-pro";
 import { uploadImg } from "@/api/visual";
+import { themeList } from "@/option/config";
+import { FullScreen, Rank, ScaleToOriginal } from "@element-plus/icons-vue";
+
+// ---------- 一键换肤辅助 ----------
+const COLOR_KEY_RULE = /color/i;
+const SKIP_COLOR_RULE = /background|track|shadow|blur|filter|mark/i;
+
+function isColorValue(value) {
+  const text = String(value).trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(text) || /^(rgba?|hsla?)\(/.test(text);
+}
+
+// 收集 option 中所有"配色型"字段的引用,保持稳定顺序
+function collectColorSlots(obj) {
+  const slots = [];
+  const walk = (node, path) => {
+    if (!node || typeof node !== "object") return;
+    Object.keys(node).forEach(key => {
+      const value = node[key];
+      const full = path ? `${path}.${key}` : String(key);
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => walk(item, `${full}[${index}]`));
+        return;
+      }
+      if (value && typeof value === "object") {
+        walk(value, full);
+        return;
+      }
+      if (
+        COLOR_KEY_RULE.test(key) &&
+        !SKIP_COLOR_RULE.test(key) &&
+        typeof value === "string" &&
+        isColorValue(value)
+      ) {
+        slots.push({ obj: node, key });
+      }
+    });
+  };
+  walk(obj, "");
+  return slots;
+}
+
+function applyPaletteToOption(option, palette) {
+  const slots = collectColorSlots(option || {});
+  const count = palette.length || 0;
+  if (!count) return 0;
+  slots.forEach((slot, index) => {
+    try {
+      slot.obj[slot.key] = palette[index % count];
+    } catch (e) {
+      /* ignore */
+    }
+  });
+  return slots.length;
+}
+
 export default {
   name: "contentmenu",
   inject: ["contain"],
@@ -297,6 +408,7 @@ export default {
         display: "none",
       },
       menuOpenUp: false,
+      themeList,
       selectCount: {
         x1: null,
         x2: null,
@@ -305,7 +417,11 @@ export default {
       },
     };
   },
-  components: {},
+  components: {
+    FullScreen,
+    Rank,
+    ScaleToOriginal,
+  },
   computed: {
     moveGroupList() {
       const currentGroup = this.contain.group || "";
@@ -536,6 +652,89 @@ export default {
         if (this.selectCount.y1 > top) this.selectCount.y1 = top;
         if (this.selectCount.y2 < top + height) this.selectCount.y2 = top + height;
       });
+    },
+    // 获取当前多选/单选命中的可操作图层列表(跳过文件夹容器本身)
+    handleActiveItems() {
+      const indexes = this.contain.active || [];
+      const result = [];
+      indexes.forEach(ele => {
+        const item = this.contain.findList(ele);
+        if (item && item.index && !item.children) result.push(item);
+      });
+      return result;
+    },
+    // 等距分布:direction = 'h' 水平 / 'v' 垂直(首尾保持原位,其余按中心等距)
+    handleDistribute(direction) {
+      const items = this.handleActiveItems();
+      if (items.length < 3) {
+        this.$message.warning("等距分布至少需要选择 3 个组件");
+        return;
+      }
+      const isH = direction === "h";
+      const sorted = items.slice().sort((a, b) => {
+        const aCenter = (isH ? a.left : a.top) + (isH ? a.component.width : a.component.height) / 2;
+        const bCenter = (isH ? b.left : b.top) + (isH ? b.component.width : b.component.height) / 2;
+        return aCenter - bCenter;
+      });
+      const size = item => (isH ? item.component.width : item.component.height);
+      const pos = item => (isH ? item.left : item.top);
+      const minCenter = pos(sorted[0]) + size(sorted[0]) / 2;
+      const maxCenter = pos(sorted[sorted.length - 1]) + size(sorted[sorted.length - 1]) / 2;
+      const step = (maxCenter - minCenter) / (sorted.length - 1);
+      sorted.forEach((item, index) => {
+        const nextCenter = minCenter + step * index;
+        const nextPos = nextCenter - size(item) / 2;
+        if (isH) {
+          item.left = Math.round(nextPos * 100) / 100;
+        } else {
+          item.top = Math.round(nextPos * 100) / 100;
+        }
+      });
+      this.$message.success(isH ? "已按水平方向等距分布" : "已按垂直方向等距分布");
+    },
+    // 统一尺寸:prop = 'width' | 'height',取选中项中的最大值
+    handleSameSize(prop) {
+      const items = this.handleActiveItems();
+      if (items.length < 2) {
+        this.$message.warning("请至少选择 2 个组件");
+        return;
+      }
+      const target = Math.max(...items.map(item => item.component[prop]));
+      if (!Number.isFinite(target) || target <= 0) {
+        this.$message.warning("无法获取统一尺寸");
+        return;
+      }
+      items.forEach(item => {
+        item.component[prop] = Math.round(target * 100) / 100;
+      });
+      this.$message.success(prop === "width" ? "已统一宽度" : "已统一高度");
+    },
+    // 一键换肤:把内置调色板套用到选中组件或当前整屏
+    handleApplySkin(themeId, scope) {
+      const palette = (this.themeList[themeId] || {}).color;
+      if (!palette || !palette.length) {
+        this.$message.warning("配色方案不存在");
+        return;
+      }
+      let items = [];
+      if (scope === "screen") {
+        items = (this.contain.list || []).filter(item => item && !item.children);
+      } else {
+        items = this.handleActiveItems();
+        if (!items.length && this.contain.activeObj) {
+          items = [this.contain.activeObj];
+        }
+      }
+      let changed = 0;
+      items.forEach(item => {
+        changed += applyPaletteToOption(item.option, palette);
+      });
+      const label = (this.themeList[themeId] || {}).name || "配色方案";
+      if (!changed) {
+        this.$message.info("当前组件无可换肤的配色字段");
+        return;
+      }
+      this.$message.success(`已为 ${items.length} 个组件应用「${label}」`);
     },
     handleStepBottom() {
       this.handleCommon(false, true);
@@ -929,6 +1128,15 @@ export default {
 }
 .contentmenu__item:hover > .contentmenu__list {
   display: block;
+}
+.skin-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
 }
 // 为二级菜单添加背景容器，避免鼠标移动间隙
 .contentmenu__item > .contentmenu__list::before {

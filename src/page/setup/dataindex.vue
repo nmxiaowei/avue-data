@@ -39,6 +39,14 @@
                   编辑
                 </el-button>
               </el-form-item>
+              <el-form-item label="数据集">
+                <div class="data-inline">
+                  <el-button type="primary" plain @click="handleOpenDataset">
+                    从数据集导入…
+                  </el-button>
+                  <dataset-picker ref="datasetPicker" @import="handleDatasetImport"></dataset-picker>
+                </div>
+              </el-form-item>
             </template>
 
             <template v-else>
@@ -238,6 +246,7 @@
 
 <script>
 import DataPreviewDialog from "@/page/components/DataPreviewDialog.vue";
+import datasetPicker from "@/page/setup/dataset-picker.vue";
 import { dicOption } from "@/option/config";
 import { uuid } from "@/utils/utils";
 
@@ -245,6 +254,7 @@ export default {
   inject: ["contain"],
   components: {
     DataPreviewDialog,
+    datasetPicker,
   },
   data() {
     return {
@@ -380,6 +390,31 @@ export default {
         item.dataQueryType = item.dataQueryType || "json";
       }
       this.$nextTick(() => this.handleRes(false));
+    },
+    handleOpenDataset() {
+      if (this.isApi(this.ensureDataSource())) {
+        this.dataSource.dataType = 0;
+      }
+      this.$refs.datasetPicker && this.$refs.datasetPicker.open();
+    },
+    // 数据集导入:覆盖或数组追加合并
+    handleDatasetImport(payload) {
+      if (!payload || payload.dataset === undefined) return;
+      const item = this.ensureDataSource();
+      const next = this.deepClone(payload.dataset);
+      const mode = payload.mode;
+      if (mode === "append" && Array.isArray(item.data) && Array.isArray(next)) {
+        item.data = item.data.concat(next);
+      } else {
+        item.data = next;
+      }
+      item.dataType = 0;
+      this.$nextTick(() => {
+        this.handleRes(false);
+        this.$message.success(
+          mode === "append" ? `已追加数据集「${payload.name}」` : `已导入数据集「${payload.name}」`,
+        );
+      });
     },
     handleFilterChange() {
       this.$nextTick(() => this.handleRes(false));

@@ -66,6 +66,7 @@ const seedState = () => ({
     }),
   ],
   files: [],
+  trash: [],
 });
 
 const normalizeScreenThumbnail = screen => {
@@ -92,6 +93,8 @@ const normalizeScreenThumbnail = screen => {
 const normalizeState = state => ({
   ...state,
   screens: Array.isArray(state.screens) ? state.screens.map(normalizeScreenThumbnail) : [],
+  files: Array.isArray(state.files) ? state.files : [],
+  trash: Array.isArray(state.trash) ? state.trash : [],
 });
 
 const readState = () => {
@@ -110,6 +113,7 @@ const readState = () => {
       ...parsed,
       screens: Array.isArray(parsed.screens) ? parsed.screens : seed.screens,
       files: Array.isArray(parsed.files) ? parsed.files : seed.files,
+      trash: Array.isArray(parsed.trash) ? parsed.trash : seed.trash,
     });
   } catch {
     const seed = normalizeState(seedState());
@@ -289,6 +293,13 @@ const handleVisual = (state, path, params, data) => {
     const ids = String(params.ids || "")
       .split(",")
       .filter(Boolean);
+    const removed = state.screens.filter(item => ids.includes(`${item.visual.id}`));
+    removed.forEach(item => {
+      state.trash.unshift({
+        ...clone(item),
+        deleteTime: nowText(),
+      });
+    });
     state.screens = state.screens.filter(item => !ids.includes(`${item.visual.id}`));
     return true;
   }
@@ -364,6 +375,25 @@ const handleGenericCollection = (state, path, params, data) => {
   return emptyPage();
 };
 
+const handleTrash = (state, path, params, data) => {
+  if (path.endsWith("/list")) return pageResult(state.trash, params);
+  if (path.endsWith("/restore")) {
+    const item = state.trash.find(entry => `${entry.visual.id}` === `${params.id}`);
+    if (!item) return false;
+    state.trash = state.trash.filter(entry => `${entry.visual.id}` !== `${params.id}`);
+    state.screens.unshift(item);
+    return true;
+  }
+  if (path.endsWith("/remove")) {
+    const ids = String(params.ids || "")
+      .split(",")
+      .filter(Boolean);
+    state.trash = state.trash.filter(entry => !ids.includes(`${entry.visual.id}`));
+    return true;
+  }
+  return emptyPage();
+};
+
 export function mockRequest(requestConfig) {
   const state = readState();
   const { path, params, data } = normalizeRequest(requestConfig);
@@ -373,6 +403,8 @@ export function mockRequest(requestConfig) {
     result = handleComponents(path, params);
   } else if (path.includes("/visual/")) {
     result = handleVisual(state, path, params, data);
+  } else if (path.includes("/trash/")) {
+    result = handleTrash(state, path, params, data);
   } else {
     result = handleGenericCollection(state, path, params, data);
   }

@@ -15,6 +15,9 @@ import rectangle from "./components/rectangle.vue";
 import datetime from "./components/datetime.vue";
 import svg from "./components/svg.vue";
 import vue from "./components/vue.vue";
+import border from "./components/border.vue";
+import kpi from "./components/kpi.vue";
+import map from "./components/map.vue";
 import customComponents from "@/components";
 
 const list = [
@@ -35,6 +38,9 @@ const list = [
   datetime,
   svg,
   vue,
+  border,
+  kpi,
+  map,
 ];
 
 const customOptionModules = import.meta.glob("../components/**/option.vue", { eager: true });
